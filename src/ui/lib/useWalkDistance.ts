@@ -40,7 +40,11 @@ export function useWalkDistance() {
       const zoneBox = zone?.getBoundingClientRect();
       const limitRight = zoneBox ? zoneBox.right - biggest - box.left : box.width - biggest;
       const distance = Math.max(box.width * 0.1, Math.min(box.width - biggest, limitRight));
-      // Три доріжки на двір: тварина №0 — верхня, №1 — середня, №2 — нижня.
+      /*
+       * Доріжки: двір ділиться на третини, і кожна тварина йде СВОЄЮ смугою
+       * (номер приходить як --lane-step 0/1/2). Ділимо саме на 3, а не на
+       * 2, інакше №2 виходив за межі ділянки й накладався на першу.
+       */
       const lane = Math.max(4, (box.height - biggest) / 3);
 
       tokens.style.setProperty('--dx', `${distance.toFixed(1)}px`);
