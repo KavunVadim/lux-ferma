@@ -123,8 +123,15 @@ export function useGame(): GameApi {
     stateRef.current = state;
   }, [state]);
 
+  /**
+   * Відкладена дія. Ідентифікатор прибирається зі списку, щойно таймер
+   * спрацював — інакше масив pending-таймерів росте всю партію (витік).
+   */
   const later = useCallback((ms: number, fn: () => void) => {
-    const id = window.setTimeout(fn, ms);
+    const id = window.setTimeout(() => {
+      timers.current = timers.current.filter((entry) => entry !== id);
+      fn();
+    }, ms);
     timers.current.push(id);
     return id;
   }, []);
@@ -161,6 +168,9 @@ export function useGame(): GameApi {
 
   const start = useCallback(
     (names: string[]) => {
+      // Звук у першому дотику: після нього браузер уже дозволяє грати звуки.
+      sound.click();
+      haptic('light');
       const created = createGame(names, rulesOf(settings));
       setState(created);
       setScreen('game');
@@ -187,6 +197,8 @@ export function useGame(): GameApi {
   );
 
   const resume = useCallback(() => {
+    sound.click();
+    haptic('light');
     const saved = loadGame();
     if (!saved) {
       setHasSave(false);

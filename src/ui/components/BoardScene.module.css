@@ -566,3 +566,70 @@
     animation: none;
   }
 }
+
+/* ── Продуктивність ───────────────────────────────────────────────────────────
+ * Тут зібрано те, що тримає поле дешевим для ПК і телефона. Правила стоять
+ * у кінці файлу навмисно: однакова специфічність + пізніше = перемагають.
+ *
+ * 1) `filter: drop-shadow` на РУХОМОМУ спрайті змушує браузер перемальовувати
+ *    фільтр щокадру; при 7 дворах × 6 тваринах це і є та «зависла мишка».
+ *    Замінюємо на статичну тінь під ногами — вигляд майже той самий, ціна нуль.
+ * 2) `left` у кадрах ходи = перерахунок розкладки щокадру → міняємо на transform.
+ * 3) contain/paint:isolation дають браузеру дозвіл не перемальовувати сусідів.
+ */
+.walker,
+.animalIcon,
+.raider,
+.slot::after,
+.hearts {
+  filter: none;
+}
+
+.slot::before {
+  content: '';
+  position: absolute;
+  left: 16%;
+  bottom: 0;
+  width: 68%;
+  height: 17%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(38, 24, 8, 0.34), rgba(38, 24, 8, 0) 70%);
+  pointer-events: none;
+}
+
+.walkStrip {
+  will-change: transform;
+  animation: walk-strip var(--walk-dur) steps(var(--frames)) var(--delay) infinite;
+}
+
+@keyframes walk-strip {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(calc(-1 * var(--frames) * 100%), 0, 0);
+  }
+}
+
+.wander,
+.graze,
+.hop,
+.raider,
+.walker {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/*
+ * `contain: paint` сюди НЕ ставимо: він обрізав би пил і кроки тварин на межах
+ * комірки. Тримаємо layout+style — цього досить, щоб браузер не перераховував
+ * розкладку сусідніх загонів.
+ */
+.slot {
+  contain: layout style;
+}
+
+.canvas,
+.field {
+  contain: layout paint;
+}

@@ -178,6 +178,20 @@ export function SettingsSheet({ settings, inGame, onChange, onReset, onClose }: 
             <b>{Math.round(settings.volume * 100)}%</b>
           </label>
 
+          <button
+            type="button"
+            className={styles.soundTest}
+            disabled={!settings.sound}
+            onClick={() => sound.play('win')}
+          >
+            🔔 Перевірити звук
+            <span>
+              {settings.sound
+                ? 'натисни — має прозвучати коротка мелодія'
+                : 'звук вимкнено — увімкни вище'}
+            </span>
+          </button>
+
           <div className={styles.effectGrid}>
             {ALL_EFFECTS.map((effect) => {
               const on = settings.effects[effect];

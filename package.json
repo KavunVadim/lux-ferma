@@ -19,6 +19,10 @@
     "atlas": "node scripts/build-atlas.mjs",
     "fonts": "node scripts/fetch-fonts.mjs",
     "check:settings": "node scripts/check-settings.mjs",
+    "check:sound": "node scripts/check-sound.mjs",
+    "check:perf": "node scripts/check-performance.mjs",
+    "shot:start": "node scripts/shot-start.mjs",
+    "shot:board": "node scripts/shot-board.mjs",
     "cap:sync": "npm run build && cap sync",
     "cap:ios": "npm run build && cap sync ios && cap open ios",
     "cap:android": "npm run build && cap sync android && cap open android"

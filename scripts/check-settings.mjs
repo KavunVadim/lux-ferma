@@ -209,7 +209,7 @@ async function main() {
   if (!started) throw new Error('Стартовий екран не зʼявився — чи запущений дев-сервер?');
 
   /* ── 1. Екран налаштувань відкривається ── */
-  await session.clickText('Налаштування гри');
+  await session.clickText('Налаштування');
   const opened = await session.waitFor(
     `!![...document.querySelectorAll('.sheet h2')].find((h) => h.textContent.includes('Налаштування'))`,
     20,
@@ -273,7 +273,7 @@ async function main() {
   );
 
   // Налаштовуємо саме те, що перевіряємо далі: хижаки вимкнені, кубики класичні.
-  await session.clickText('Налаштування гри');
+  await session.clickText('Налаштування');
   await session.waitFor(`!!document.querySelector('.sheet')`, 20, 200);
   const offLabel = await session.clickOptionIn('Хижаки', 2);
   const classicLabel = await session.clickOptionIn('Кубики', 0);

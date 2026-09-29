@@ -27,8 +27,6 @@ export interface SoundConfig {
   effects: Record<SoundEffect, boolean>;
 }
 
-const MUTE_KEY = 'lux-ferma:muted';
-
 const defaultEffects = (): Record<SoundEffect, boolean> => ({
   click: true,
   roll: true,
@@ -49,10 +47,17 @@ class SoundEngine {
   private scheduled: number[] = [];
 
   constructor() {
-    try {
-      this.mutedFlag = window.localStorage.getItem(MUTE_KEY) === '1';
-    } catch {
-      this.mutedFlag = false;
+    // Стан «тихо/звук» живе в налаштуваннях (lux-ferma:settings), а не тут:
+    // два джерела правди для одного перемикача — це вже одного разу зіпсувало
+    // звук після зміни налаштувань.
+    if (typeof window !== 'undefined') {
+      const unlock = () => {
+        this.unlock();
+        window.removeEventListener('pointerdown', unlock);
+        window.removeEventListener('keydown', unlock);
+      };
+      window.addEventListener('pointerdown', unlock, { passive: true });
+      window.addEventListener('keydown', unlock);
     }
   }
 
@@ -82,11 +87,6 @@ class SoundEngine {
 
   setMuted(value: boolean): void {
     this.mutedFlag = value;
-    try {
-      window.localStorage.setItem(MUTE_KEY, value ? '1' : '0');
-    } catch {
-      /* ignore */
-    }
     this.listeners.forEach((listener) => listener(value));
   }
 
@@ -129,22 +129,43 @@ class SoundEngine {
     if (!ctx) return;
     const level = volume * this.volumeFlag;
     if (level <= 0.002) return;
-    try {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      if (slide) {
-        osc.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), ctx.currentTime + duration);
+
+    const schedule = () => {
+      try {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        if (slide) {
+          osc.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), ctx.currentTime + duration);
+        }
+        gain.gain.setValueAtTime(level, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch {
+        /* не критично */
       }
-      gain.gain.setValueAtTime(level, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + duration);
-    } catch {
-      /* не критично */
+    };
+
+    // Браузер тримає контекст «сплячим», поки не було дотику. Якщо сигнал
+    // замовлено саме в першому дотику — чекаємо на пробудження, інакше
+    // перший звук просто зникає (це і є «на ПК немає звуків»).
+    if (ctx.state === 'suspended') {
+      void ctx.resume().then(schedule).catch(() => undefined);
+      return;
     }
+    schedule();
+  }
+
+  /**
+   * Пробуджує звук у першому ж дотику до сторінки. Без цього перший сигнал
+   * (кидок кубиків) може загубитись, бо браузер ще не дозволив звук.
+   */
+  unlock(): void {
+    const ctx = this.context();
+    if (ctx && ctx.state === 'suspended') void ctx.resume().catch(() => undefined);
   }
 
   /*────────────────────────── самі сигнали ──────────────────────────*/
@@ -213,19 +234,21 @@ class SoundEngine {
         for (let i = 0; i < hits; i += 1) {
           const ratio = i / hits;
           const gap = 150 - ratio * 105; // 150 мс → 45 мс: прискорення
-          const id = window.setTimeout(
-            () => this.beep(120 + ratio * 70, 0.05, 'square', 0.05 + ratio * 0.03),
-            at,
-          );
+          let id = 0;
+          id = window.setTimeout(() => {
+            this.scheduled = this.scheduled.filter((entry) => entry !== id);
+            this.beep(120 + ratio * 70, 0.05, 'square', 0.05 + ratio * 0.03);
+          }, at);
           this.scheduled.push(id);
           at += gap;
         }
-        this.scheduled.push(
-          window.setTimeout(() => {
-            this.beep(880, 0.16, 'triangle', 0.14);
-            window.setTimeout(() => this.beep(1320, 0.3, 'triangle', 0.13), 110);
-          }, at + 30),
-        );
+        let accent = 0;
+        accent = window.setTimeout(() => {
+          this.scheduled = this.scheduled.filter((entry) => entry !== accent);
+          this.beep(880, 0.16, 'triangle', 0.14);
+          window.setTimeout(() => this.beep(1320, 0.3, 'triangle', 0.13), 110);
+        }, at + 30);
+        this.scheduled.push(accent);
         break;
       }
     }
