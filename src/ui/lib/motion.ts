@@ -45,7 +45,7 @@ export function motionFor(key: string, index: number): Motion {
 
   const kind = 'wander' as const;
   const second = noise(seed + 1);
-  const fourth = noise(seed + 3);
+  const slide = noise(seed + 4);
   const style = WALK_STYLE[key as HerdKey];
 
   // Фаза циклу в межах 0..1: сусіди стоять у протифазі.
@@ -54,16 +54,30 @@ export function motionFor(key: string, index: number): Motion {
   // накладаються. Значення в ПІКСЕЛЯХ (BoardScene підставляє --lane-px):
   // у відсотках від розміру тварини це давало стрибки на тисячі пікселів.
   const laneStep = index % 3;
+  /**
+   * Початковий бік. Раніше `flip` брався з шуму, і в одному дворі всі тварини
+   * виходили однакові — «стадо, що йде в один бік». Тепер парні починають
+   * праворуч, непарні — ліворуч, тож двір виглядає живим.
+   */
+  const flip = index % 2 === 0 ? '1' : '-1';
+
+  /*
+   * Час одного проходу двору. Від нього залежить і швидкість руху (--dur), і
+   * темп кроку (--walk-dur): 6 кадрів ходи мають припадати приблизно на одну
+   * комірку пройденого шляху. Інакше тварина «їде» без кроку (ноги дріботять
+   * удвічі швидше за рух) або рухається спиною, бо хода й рух не збігаються.
+   */
+  const travel = (3.6 + slide * 4) * (style?.speed ?? 1);
 
   return {
     kind,
     vars: {
-      '--dur': `${(2.6 + second * 2.6).toFixed(2)}s`,
       /**
-       * Темп кроку для спрайт-листа ходи. Множиться на видовий коефіцієнт:
-       * качка дріботить швидко, корова переступає повільно.
+       * Час одного проходу двору. Крок (--walk-dur) = прохід / 6.5: у циклі
+       * 6 кадрів, і хода має припадати на пройдений шлях, а не дріботіти.
        */
-      '--walk-dur': `${((0.85 + second * 0.7) * (style?.speed ?? 1)).toFixed(2)}s`,
+      '--dur': `${travel.toFixed(2)}s`,
+      '--walk-dur': `${(travel / 6.5).toFixed(2)}s`,
       // Погойдування тіла й перевальцем — те, чого не малюють кадри.
       '--bob': `${style?.bob ?? 3}%`,
       '--waddle': `${style?.waddle ?? 2}deg`,
@@ -72,7 +86,7 @@ export function motionFor(key: string, index: number): Motion {
       // Кожна тварина ходить своєю смугою двору (крок у пікселях — BoardScene).
       '--lane-step': String(laneStep),
       '--dy': `${(4 + second * 8).toFixed(0)}%`,
-      '--flip': fourth > 0.5 ? '-1' : '1',
+      '--flip': flip,
     },
   };
 }

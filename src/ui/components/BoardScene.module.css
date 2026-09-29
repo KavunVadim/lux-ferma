@@ -450,11 +450,14 @@
 
 /*
  * Хода «туди-сюди»: тварина проходить свою смугу двору, розвертається й
- * вертається — і так по коло. `--lane` зсуває смугу по вертикалі, тому
+ * вертається — і так по коло. `--lane-px` зсуває смугу по вертикалі, тому
  * тварини одного двору йдуть різними доріжками й не накладаються одна на одну.
  * Рух переважно горизонтальний: вертикальна складова мала (кілька відсотків),
  * щоб це не читалось як підстрибування.
- * Розворот — швидка зміна scaleX на 4% часу циклу (≈0.1 с).
+ *
+ * Розворот робиться МИТТЄВО в тій самій точці (46% → 50%): у моменті розвороту
+ * `translate3d` повертається в 0, тому без цього стрибка тварина «проїжджала»
+ * пів двору задом наперед.
  */
 @keyframes up-wander {
   0% {
@@ -464,11 +467,11 @@
     transform: translate3d(var(--dx), calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(var(--flip)) rotate(0deg);
   }
   50% {
-    transform: translate3d(var(--dx), calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0)
+    transform: translate3d(0, calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0)
       scaleX(calc(-1 * var(--flip))) rotate(0deg);
   }
   96% {
-    transform: translate3d(0, calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0)
+    transform: translate3d(var(--dx), calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0)
       scaleX(calc(-1 * var(--flip))) rotate(0deg);
   }
   100% {
