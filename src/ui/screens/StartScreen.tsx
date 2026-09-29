@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { ANIMAL_SPRITES } from '../../assets/manifest';
 import { useAssets } from '../../assets/useAssets';
-import { GAME_TAGLINE, GAME_TITLE, MAX_PLAYERS, MIN_PLAYERS, SPECIES } from '../../game/config';
+import {
+  GAME_TAGLINE,
+  GAME_TITLE,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
+  PLAYER_AVATARS,
+  PLAYER_COLORS,
+  SPECIES,
+} from '../../game/config';
 import { cn } from '../../lib/cn';
 import { Button } from '../components/Button';
 import { Sprite } from '../components/Sprite';
@@ -17,7 +25,11 @@ interface StartScreenProps {
 
 const COUNTS = [2, 3, 4];
 
-/** Стартовий екран: кількість гравців, імена, продовження партії. */
+/**
+ * Стартовий екран у стилі гри: дерев'яна вивіска з назвою, картки гравців
+ * з аватарами й кольорами, велика зелена кнопка старту та дерев'яний лоток
+ * для другорядних дій. Поки спрайти вантажаться — смужка прогресу на вивісці.
+ */
 export function StartScreen({ hasSave, onStart, onResume, onOpenRules, onOpenSettings }: StartScreenProps) {
   const [count, setCount] = useState(MIN_PLAYERS);
   const [names, setNames] = useState<string[]>(() => Array.from({ length: MAX_PLAYERS }, () => ''));
@@ -33,21 +45,44 @@ export function StartScreen({ hasSave, onStart, onResume, onOpenRules, onOpenSet
 
   return (
     <section className={styles.screen}>
-      <div className={styles.hero}>
-        <div className={styles.heroRow}>
+      <header className={styles.sign}>
+        <span className={styles.signRope} aria-hidden />
+        <span className={styles.signWheat} aria-hidden>
+          🌾
+        </span>
+        <h1 className={styles.title}>{GAME_TITLE}</h1>
+        <p className={styles.tagline}>{GAME_TAGLINE}</p>
+        <div className={styles.herdRow} aria-hidden>
           {SPECIES.map((species, index) => (
             <Sprite
               key={species}
               src={ANIMAL_SPRITES[species]}
               emoji="🐾"
-              className={styles.heroSprite}
+              className={styles.herdSprite}
               style={{ animationDelay: `${index * 0.18}s` }}
             />
           ))}
         </div>
-        <h1 className={styles.title}>{GAME_TITLE}</h1>
-        <p className={styles.tagline}>{GAME_TAGLINE}</p>
-      </div>
+      </header>
+
+      {!ready && (
+        <div className={styles.loading} role="status">
+          <span className={styles.loadingBar} style={{ width: `${Math.max(6, progress * 100)}%` }} />
+          <span className={styles.loadingText}>Готуємо ферму… {Math.round(progress * 100)}%</span>
+        </div>
+      )}
+
+      {hasSave && (
+        <button type="button" className={styles.resume} onClick={onResume}>
+          <span className={styles.resumeIcon} aria-hidden>
+            ▶
+          </span>
+          <span className={styles.resumeText}>
+            <b>Продовжити партію</b>
+            <i>збережена гра чекає на тебе</i>
+          </span>
+        </button>
+      )}
 
       <div className={cn('card', styles.card)}>
         <h3 className={styles.cardTitle}>Скільки гравців?</h3>
@@ -59,18 +94,35 @@ export function StartScreen({ hasSave, onStart, onResume, onOpenRules, onOpenSet
               type="button"
               role="radio"
               aria-checked={count === value}
+              aria-label={`${value} гравці`}
               className={cn(styles.pick, count === value && styles.pickActive)}
               onClick={() => setCount(value)}
             >
-              {value}
+              <span className={styles.pickFaces} aria-hidden>
+                {Array.from({ length: value }, (_, index) => (
+                  <span key={index} className={styles.pickFace}>
+                    {PLAYER_AVATARS[index]}
+                  </span>
+                ))}
+              </span>
+              <b className={styles.pickCount}>{value}</b>
             </button>
           ))}
         </div>
 
         <div className={styles.names}>
           {Array.from({ length: count }, (_, index) => (
-            <div key={index} className={styles.nameRow} style={{ animationDelay: `${index * 0.06}s` }}>
-              <span className={styles.nameDot} data-index={index} />
+            <label
+              key={index}
+              className={styles.nameRow}
+              style={{
+                animationDelay: `${index * 0.06}s`,
+                ['--player-color' as string]: PLAYER_COLORS[index % PLAYER_COLORS.length],
+              }}
+            >
+              <span className={styles.nameAvatar} aria-hidden>
+                {PLAYER_AVATARS[index]}
+              </span>
               <input
                 className={styles.input}
                 type="text"
@@ -79,31 +131,23 @@ export function StartScreen({ hasSave, onStart, onResume, onOpenRules, onOpenSet
                 placeholder={`Гравець ${index + 1}`}
                 onChange={(event) => updateName(index, event.target.value)}
               />
-            </div>
+            </label>
           ))}
         </div>
 
-        <div className={styles.actions}>
-          {hasSave && (
-            <Button variant="wood" onClick={onResume}>
-              ▶ Продовжити партію
-            </Button>
-          )}
-          <Button variant="barn" onClick={() => onStart(names.slice(0, count))}>
-            🚜 Почати гру
-          </Button>
-          <Button variant="ghost" onClick={onOpenRules}>
-            📖 Як грати
-          </Button>
-          <Button variant="ghost" onClick={onOpenSettings}>
-            ⚙️ Налаштування гри
-          </Button>
-        </div>
-
-        {!ready && (
-          <p className={styles.loading}>Малюємо ферму… {Math.round(progress * 100)}%</p>
-        )}
+        <Button variant="green" block pulse onClick={() => onStart(names.slice(0, count))}>
+          🎲 Почати гру
+        </Button>
       </div>
+
+      <footer className={styles.tray}>
+        <Button variant="wood" small onClick={onOpenRules}>
+          📖 Як грати
+        </Button>
+        <Button variant="wood" small onClick={onOpenSettings}>
+          ⚙️ Налаштування
+        </Button>
+      </footer>
     </section>
   );
 }

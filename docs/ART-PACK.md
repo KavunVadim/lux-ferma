@@ -121,6 +121,42 @@ ffmpeg -i walk.mp4 -vf "fps=8,scale=512:-1" assets-src/walk/duck/%03d.png
 
 ---
 
+## 6. UI для телефону (за концептом)
+
+Концепт телефонної версії: дерев'яні панелі, банер події, лоток із трьома кнопками
+внизу, список гравців зліва, кубики над лотком. **Монети, «Магазин» і «Речі» нам не
+потрібні** — їх пропускаємо.
+
+**Формат для всього UI:** PNG з прозорим фоном. Панелі/кнопки/рамки — **9-slice**
+(рівні краї товщиною ~12% і однакова середина, щоб розтягувались без спотворень).
+Промпти в одному стилі: `mobile game UI asset, cartoon 3D wood, warm lighting from the
+upper left, no text, transparent background, 9-slice ready`.
+
+| Файл | Що | Промпт |
+| --- | --- | --- |
+| `sign-title.png` | велика дерев'яна вивіска під назву | `A large wooden game logo signboard with straw and leaf decorations at the top corners, blank surface, no text` |
+| `panel-wood.png` | панель (список гравців, підказки) | `A tall rounded wooden UI panel with a carved frame, blank interior, no text` |
+| `banner-event.png` | банер події («Лисиця! Втрата 1 тварини») | `A wide wooden banner plaque with a rope on top, blank interior, no text` |
+| `tray-wood.png` | лоток під кнопки дій | `A long horizontal wooden tray / plank panel, rounded ends, blank, no text` |
+| `btn-green.png` · `btn-green-pressed.png` | головна кнопка («Кинути кубики») | `A glossy green rounded game button, blank, cartoon 3D, top light` |
+| `btn-blue.png` · `btn-blue-pressed.png` | другорядна кнопка («Обмін») | `A glossy blue rounded game button, blank, cartoon 3D, top light` |
+| `btn-brown.png` · `btn-brown-pressed.png` | третя кнопка («Передати хід») | `A glossy brown wooden rounded game button, blank, cartoon 3D, top light` |
+| `progress-frame.png` | рамка смужки прогресу (N/5) | `A rounded wooden progress bar frame with a green glossy fill, blank, no text` |
+| `avatar-1.png` … `avatar-4.png` | 4 аватари в круглих рамках | `A round cartoon portrait of a young farmer with a straw hat, friendly smile, painted game avatar, transparent background` (варіювати: хлопчик, дівчинка, чоловік, жінка) |
+| `icon-dice.png` | кубик для кнопки кидка | `A cartoon 3D white dice with black pips, three-quarter view, transparent background` |
+| `icon-swap.png` | обмін | `Two curved arrows forming a swap icon, glossy green cartoon style, transparent background` |
+| `icon-next.png` | передати хід | `A rounded arrow pointing right, glossy brown cartoon style, transparent background` |
+| `icon-farm.png` `icon-book.png` `icon-trophy.png` `icon-gear.png` | HUD: ферма, історія, досягнення, налаштування | `A glossy cartoon icon of a small farm house (book / trophy / gear), rounded, wooden and green palette, transparent background` |
+| `icon-crown.png` | корона для лідера | `A small golden cartoon crown, glossy, transparent background` |
+| `leaf-corner.png` | прикраса-листок для кутів | `A small green leaf and straw decoration for a UI corner, transparent background` |
+
+**Що я можу зробити без жодного нового арта** (і вже частково зробив): дерев'яні
+таблички дворів, вивіска «Люкс Ферма», лоток кнопок, рамки, корона — усе це зараз
+намальовано CSS-градієнтами. Тому UI-спрайти — це «зробити соковитіше», а не блокер.
+Пріоритет, якщо робити не все: `avatar-1…4`, `icon-dice`, `btn-green`, `banner-event`.
+
+---
+
 ## Що з цього дає найбільший ефект
 
 1. **Карта** (розділ 1) — разюча зміна вигляду: замість плоскої 2D-арти буде
