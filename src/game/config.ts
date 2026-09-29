@@ -242,13 +242,30 @@ export const ZONES: Record<HerdKey, ZoneLayout> = {
   // по арт-карті (public/assets/map.webp, 1664×928):
   // прямокутник накриває намальований загін, building — будівлю в загоні,
   // tokens — вільне місце, де стоять спрайти тварин.
-  duck: { x: 25.5, y: 7.5, w: 19, h: 28, building: [40, 12, 60, 64], tokens: [38, 4, 0, 19.5], cap: 8 },
-  goat: { x: 49.5, y: 10, w: 30.5, h: 23, building: [37.5, 0, 51.5, 73.5], tokens: [26.5, 26.5, 0, 15], cap: 6 },
-  pig: { x: 8, y: 36, w: 32, h: 27, building: [27.5, 0, 66, 76], tokens: [8, 6, 46, 4], cap: 6 },
-  horse: { x: 64, y: 34.5, w: 27, h: 27, building: [36.5, 0, 56, 64], tokens: [23, 11.5, 10, 8], cap: 5 },
-  cow: { x: 36, y: 50, w: 25, h: 31, building: [41, 0, 56, 64], tokens: [30, 26.5, 20.5, 24.5], cap: 5 },
-  sdog: { x: 20.5, y: 64.5, w: 15.5, h: 20.5, building: [28.5, 0, 48.5, 70.5], tokens: [26.5, 18, 9, 16.5], cap: 3 },
-  bdog: { x: 65, y: 65.5, w: 15, h: 16, building: [8, 12, 92, 86], tokens: [25.5, 42, 0, 0], cap: 3 },
+  // ── Розкладка з редактора карти (сеанс користувача, у % від площі сцени) ──
+  duck: { x: 24.5, y: 8.5, w: 23.5, h: 25.5, building: [36, 2.5, 37.5, 54.5], tokens: [51, 23.5, 3.5, 17.5], cap: 8 },
+  goat: { x: 51.5, y: 10, w: 26, h: 23, building: [36.5, 0, 51.5, 73.5], tokens: [44, 29.5, 1.5, 24.5], cap: 6 },
+  pig: { x: 8, y: 32.5, w: 27, h: 28.5, building: [26.5, 0, 48.5, 68], tokens: [34.5, 21, 10, 20.5], cap: 6 },
+  horse: { x: 64, y: 34.5, w: 27, h: 27, building: [47.5, 2, 52.5, 61.5], tokens: [33.5, 28, 12, 23], cap: 5 },
+  cow: { x: 36, y: 49.5, w: 27, h: 27.5, building: [41, 0, 44, 65], tokens: [30, 26.5, 10, 24.5], cap: 5 },
+  sdog: { x: 20, y: 67.5, w: 16, h: 20.5, building: [35, 0, 40.5, 58.5], tokens: [15, 35, 20, 22], cap: 3 },
+  bdog: { x: 62.5, y: 65.5, w: 15, h: 21, building: [22, 0, 54.5, 64], tokens: [25.5, 33.5, 4.5, 10], cap: 3 },
+};
+
+/**
+ * Масштаб спрайта за видом. Комірки в усіх однакові (1.45em), але на арті
+ * тварини намальовані різного розміру, тому псів доводиться збільшувати —
+ * інакше вони виглядають як цятки. Крутити тут: 1 = як є, 1.45 = на 45% більше.
+ * Зміна видна на полі одразу (HMR).
+ */
+export const SPRITE_SCALE: Record<HerdKey, number> = {
+  duck: 1,
+  goat: 1,
+  pig: 1,
+  horse: 1,
+  cow: 1,
+  sdog: 1.45,
+  bdog: 1.5,
 };
 
 export interface DecorPlacement {
@@ -273,8 +290,8 @@ const decor = (name: string, emoji: string, x: number, y: number, w: number): De
  * (Спрайти decor/*.webp доступні, якщо захочеться додати ще.)
  */
 export const DECOR: readonly DecorPlacement[] = [
-  decor('house', '🏠', 39.5, 27, 14.5),
-  decor('mill', '🏭', 45.5, 4, 8.5),
+  decor('house', '🏠', 41.5, 24, 15),
+  decor('mill', '🏭', 46, 1.5, 5.5),
 ];
 
 export const MAP_SPRITE = 'assets/map.webp';

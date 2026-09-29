@@ -37,6 +37,9 @@ interface MapEditorProps {
 const round = (value: number): number => Math.round(value * 2) / 2;
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
+/** Де стояла панель редактора (її запам'ятовуємо між запусками). */
+const PANEL_KEY = 'lux-ferma:editor-panel';
+
 type FrameGetter = () => DOMRect | undefined;
 
 /**
@@ -143,6 +146,62 @@ export function MapEditor({ layout, onChange, onClose }: MapEditorProps) {
   const [copied, setCopied] = useState(false);
   const snippet = useMemo(() => exportSnippet(layout), [layout]);
 
+  /*
+   * Панель можна перетягнути за заголовок і згорнути. Це не примха: панель
+   * закривала нижні загони (зокрема будку малого пса), тому її положення
+   * зберігаємо — щоб при наступному відкритті вона не лізла на карту знову.
+   */
+  const [panel, setPanel] = useState<{ x: number; y: number } | null>(() => {
+    try {
+      const raw = window.localStorage.getItem(PANEL_KEY);
+      return raw ? (JSON.parse(raw) as { x: number; y: number }) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem(PANEL_KEY)?.includes('"collapsed":true') ?? false;
+    } catch {
+      return false;
+    }
+  });
+  const dragRef = useRef<{ dx: number; dy: number } | null>(null);
+
+  const persist = useCallback((next: { x: number; y: number } | null, isCollapsed: boolean) => {
+    try {
+      window.localStorage.setItem(PANEL_KEY, JSON.stringify({ collapsed: isCollapsed, ...(next ?? {}) }));
+    } catch {
+      /* приватний режим — не критично */
+    }
+  }, []);
+
+  const startDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    const box = event.currentTarget.parentElement?.getBoundingClientRect();
+    if (!box) return;
+    dragRef.current = { dx: event.clientX - box.left, dy: event.clientY - box.top };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const onDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const width = event.currentTarget.parentElement?.offsetWidth ?? 320;
+    const height = event.currentTarget.parentElement?.offsetHeight ?? 120;
+    const x = Math.min(Math.max(4, event.clientX - drag.dx), Math.max(4, window.innerWidth - width - 4));
+    const y = Math.min(Math.max(4, event.clientY - drag.dy), Math.max(4, window.innerHeight - height - 4));
+    setPanel({ x, y });
+  };
+
+  const endDrag = () => {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    setPanel((current) => {
+      persist(current, collapsed);
+      return current;
+    });
+  };
+
   const rootFrame: FrameGetter = useCallback(() => rootRef.current?.getBoundingClientRect(), []);
 
   /**
@@ -238,19 +297,45 @@ export function MapEditor({ layout, onChange, onClose }: MapEditorProps) {
         />
       ))}
 
-      <div className={styles.panel}>
-        <div className={styles.panelHead}>
+      <div
+        className={`${styles.panel}${collapsed ? ` ${styles.panelCollapsed}` : ''}`}
+        style={panel ? { left: panel.x, top: panel.y, bottom: 'auto', right: 'auto' } : undefined}
+      >
+        <div
+          className={styles.panelHead}
+          onPointerDown={startDrag}
+          onPointerMove={onDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          title="Перетягни, щоб перенести панель"
+        >
           <b>Редактор карти</b>
-          <button type="button" className={styles.panelBtn} onClick={onClose}>
-            ✕
-          </button>
+          <span className={styles.headBtns}>
+            <button
+              type="button"
+              className={styles.panelBtn}
+              onClick={() => {
+                const next = !collapsed;
+                setCollapsed(next);
+                persist(panel, next);
+              }}
+            >
+              {collapsed ? '▴ розгорнути' : '▾ згорнути'}
+            </button>
+            <button type="button" className={styles.panelBtn} onClick={onClose}>
+              ✕
+            </button>
+          </span>
         </div>
-        <p className={styles.hint}>
-          Тягнеш рамку — рухаєш, тягнеш білий квадратик у куті — розмір. Крок 0.5%. Рамки сусідніх загонів
-          перетинаються: якщо за тіло не хапається, тягни за вільну частину (кути доступні завжди).
-        </p>
-        <pre className={styles.code}>{snippet}</pre>
-        <div className={styles.panelActions}>
+        {!collapsed && (
+          <>
+            <p className={styles.hint}>
+              Тягнеш рамку — рухаєш, тягнеш білий квадратик у куті — розмір. Крок 0.5%. Рамки сусідніх загонів
+              перетинаються: якщо за тіло не хапається, тягни за вільну частину (кути доступні завжди). Панель
+              перетягується за заголовок і ховається кнопкою «згорнути».
+            </p>
+            <pre className={styles.code}>{snippet}</pre>
+            <div className={styles.panelActions}>
           <button type="button" className={styles.panelBtn} onClick={copy}>
             {copied ? '✓ Скопійовано' : 'Копіювати JSON'}
           </button>
@@ -264,7 +349,9 @@ export function MapEditor({ layout, onChange, onClose }: MapEditorProps) {
           >
             Скинути
           </button>
-        </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

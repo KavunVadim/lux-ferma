@@ -5,7 +5,7 @@ import {
   MAP_URL,
   PREDATOR_SPRITES,
 } from '../../assets/manifest';
-import { ANIMALS, DECOR, HERD_KEYS, PREDATORS, ZONES } from '../../game/config';
+import { ANIMALS, DECOR, HERD_KEYS, PREDATORS, SPRITE_SCALE, ZONES } from '../../game/config';
 import type { DecorPlacement, ZoneLayout } from '../../game/config';
 import type { GameEvent, GameState, HerdKey } from '../../game/types';
 import { cn } from '../../lib/cn';
@@ -136,6 +136,8 @@ export function BoardScene({
                   right: `${zone.tokens[1]}%`,
                   bottom: `${zone.tokens[2]}%`,
                   left: `${zone.tokens[3]}%`,
+                  // Спрайт пса на арті дрібніший — масштаб задаємо за видом.
+                  ['--scale' as string]: SPRITE_SCALE[key],
                 }}
               >
                 {Array.from({ length: shown }, (_, index) => {

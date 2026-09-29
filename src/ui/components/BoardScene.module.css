@@ -99,8 +99,13 @@
 .slot {
   position: relative;
   display: inline-flex;
-  width: 1.45em;
-  height: 1.45em;
+  /*
+   * 1.45em — базова комірка, `--scale` — видовий масштаб (див. SPRITE_SCALE
+   * у config.ts). Комірка може виходити за межі області `tokens`: це нормально,
+   * тварини й так «гуляють» своїм загоном.
+   */
+  width: calc(1.45em * var(--scale, 1));
+  height: calc(1.45em * var(--scale, 1));
 }
 
 /*

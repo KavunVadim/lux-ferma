@@ -100,7 +100,31 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
   font-size: 12px;
+}
+
+.panelHead:active {
+  cursor: grabbing;
+}
+
+.headBtns {
+  display: flex;
+  gap: 4px;
+}
+
+/* Згорнутий стан: лишається тільки заголовок, карта під ним вільна. */
+.panelCollapsed {
+  width: auto;
+  max-height: none;
+  padding: 6px 10px;
+}
+
+.panelCollapsed .panelHead {
+  justify-content: flex-start;
 }
 
 .hint {

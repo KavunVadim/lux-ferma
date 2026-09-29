@@ -178,6 +178,94 @@ const editor = await evaluate(`
   })()
 `);
 console.log('редактор:', JSON.stringify(editor));
-await shoot('/tmp/editor-check.png');
+
+/* ── Панель можна перетягнути й згорнути ── */
+const rectOf = (selector) =>
+  evaluate(`(() => {
+    const el = document.querySelector(${JSON.stringify(selector)});
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { x: +r.x.toFixed(0), y: +r.y.toFixed(0), w: +r.width.toFixed(0), h: +r.height.toFixed(0) };
+  })()`);
+
+const panelBefore = await rectOf('[class*="panel"]');
+const head = await rectOf('[class*="panelHead"]');
+if (head) {
+  const from = { x: head.x + head.w / 2, y: head.y + head.h / 2 };
+  await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: from.x, y: from.y, button: 'left', clickCount: 1 });
+  for (let step = 1; step <= 6; step += 1) {
+    await send('Input.dispatchMouseEvent', {
+      type: 'mouseMoved',
+      x: from.x + (280 * step) / 6,
+      y: from.y - (150 * step) / 6,
+      button: 'left',
+    });
+    await sleep(30);
+  }
+  await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: from.x + 280, y: from.y - 150, button: 'left' });
+  await sleep(250);
+}
+const panelAfter = await rectOf('[class*="panel"]');
+const moved = panelBefore && panelAfter && (panelAfter.x !== panelBefore.x || panelAfter.y !== panelBefore.y);
+console.log(`панель: ${JSON.stringify(panelBefore)} → ${JSON.stringify(panelAfter)} · перетягнулась: ${moved ? 'так ✓' : 'НІ ✗'}`);
+
+await evaluate(`(() => {
+  const btn = [...document.querySelectorAll('button')].find((b) => /згорнути/.test(b.textContent));
+  if (btn) btn.click();
+  return !!btn;
+})()`);
+await sleep(300);
+const collapsed = await evaluate(`(() => ({
+  codeVisible: !!document.querySelector('[class*="code"]'),
+  handled: !!document.querySelector('[class*="handle"]'),
+  label: [...document.querySelectorAll('button')].map((b) => b.textContent.trim()).find((t) => /розгорнути|згорнути/.test(t)) ?? null,
+}))()`);
+console.log('після згортання:', JSON.stringify(collapsed));
+await shoot('/tmp/editor-panel.png');
+
+/* ── Розмір спрайтів за видами (собаки мають бути більші) ── */
+await send('Page.navigate', { url: URL_ });
+await sleep(3200);
+await evaluate(`try { localStorage.clear(); } catch {}`);
+await send('Page.reload', { ignoreCache: true });
+await sleep(3200);
+await clickText('Почати гру');
+await sleep(3600);
+await clickText('Ок, далі');
+await sleep(600);
+await evaluate(`
+  (() => {
+    const s = JSON.parse(localStorage.getItem('lux-ferma:save'));
+    s.players[0].farm = { duck: 3, goat: 2, pig: 2, horse: 2, cow: 2, sdog: 2, bdog: 2 };
+    s.players[1].farm = { duck: 1, goat: 1, pig: 1, horse: 1, cow: 1, sdog: 1, bdog: 1 };
+    s.herd = { duck: 20, goat: 12, pig: 8, horse: 6, cow: 6, sdog: 3, bdog: 3 };
+    localStorage.setItem('lux-ferma:save', JSON.stringify(s));
+    return true;
+  })()
+`);
+await send('Page.reload', { ignoreCache: true });
+await sleep(3000);
+await clickText('Продовжити');
+await sleep(3600);
+await clickText('Ок, далі');
+await sleep(800);
+const sizes = await evaluate(`
+  (() => {
+    const rows = [];
+    for (const box of document.querySelectorAll('[class*="tokens"]')) {
+      const slot = box.querySelector('[class*="slot"]');
+      if (!slot) continue;
+      const sign = box.parentElement?.querySelector('[class*="sign"] b')?.textContent ?? '?';
+      rows.push({
+        вид: sign,
+        масштаб: getComputedStyle(box).getPropertyValue('--scale').trim() || '1',
+        комірка: +slot.getBoundingClientRect().width.toFixed(1),
+      });
+    }
+    return rows;
+  })()
+`);
+console.log('розміри спрайтів:', JSON.stringify(sizes));
+await shoot('/tmp/dogs-size.png');
 socket.close();
 chrome.kill();
