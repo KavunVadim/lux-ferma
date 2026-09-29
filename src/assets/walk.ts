@@ -14,12 +14,16 @@ export interface WalkSheet {
   frames: number;
 }
 
-export const WALK_SHEETS: Partial<Record<HerdKey, WalkSheet>> = {
-  duck: { url: 'assets/walk/duck.webp', frames: 8 },
-  goat: { url: 'assets/walk/goat.webp', frames: 8 },
-  pig: { url: 'assets/walk/pig.webp', frames: 8 },
+/** Вид тварини або хижак — усе, для чого може бути стрічка кадрів. */
+export type WalkKey = HerdKey | 'fox' | 'bear';
+
+export const WALK_SHEETS: Partial<Record<WalkKey, WalkSheet>> = {
+  duck: { url: 'assets/walk/duck.webp', frames: 6 },
+  goat: { url: 'assets/walk/goat.webp', frames: 6 },
+  pig: { url: 'assets/walk/pig.webp', frames: 6 },
   horse: { url: 'assets/walk/horse.webp', frames: 8 },
-  cow: { url: 'assets/walk/cow.webp', frames: 8 },
-  sdog: { url: 'assets/walk/sdog.webp', frames: 8 },
+  cow: { url: 'assets/walk/cow.webp', frames: 6 },
+  sdog: { url: 'assets/walk/sdog.webp', frames: 6 },
   bdog: { url: 'assets/walk/bdog.webp', frames: 8 },
+  bear: { url: 'assets/walk/bear.webp', frames: 6 },
 };

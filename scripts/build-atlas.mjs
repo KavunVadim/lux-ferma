@@ -32,6 +32,8 @@ const CELL = 176;
 const DEMO_FRAMES = 8;
 
 const SPECIES = ['duck', 'goat', 'pig', 'horse', 'cow', 'sdog', 'bdog'];
+/** Хижаки: своєї стрічки в демо не мають, але кадри може дати аркуш (напр. bear). */
+const PREDATORS = ['bear', 'fox'];
 
 /** Список кадрів виду: спершу тека в assets-src, інакше — нічого. */
 function framesFromSource(species) {
@@ -119,6 +121,12 @@ async function main() {
     if (built) manifest[species] = built;
   }
 
+  // Хижаки: демо-кадрів для них немає, будуємо тільки якщо є свої кадри.
+  for (const predator of PREDATORS) {
+    const built = await buildSpecies(predator, false);
+    if (built) manifest[predator] = built;
+  }
+
   const entries = Object.entries(manifest)
     .map(([key, value]) => `  ${key}: { url: '${value.url}', frames: ${value.frames} },`)
     .join('\n');
@@ -141,7 +149,10 @@ export interface WalkSheet {
   frames: number;
 }
 
-export const WALK_SHEETS: Partial<Record<HerdKey, WalkSheet>> = {
+/** Вид тварини або хижак — усе, для чого може бути стрічка кадрів. */
+export type WalkKey = HerdKey | 'fox' | 'bear';
+
+export const WALK_SHEETS: Partial<Record<WalkKey, WalkSheet>> = {
 ${entries}
 };
 `,

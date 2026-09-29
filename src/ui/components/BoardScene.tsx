@@ -6,6 +6,7 @@ import {
   PREDATOR_SPRITES,
 } from '../../assets/manifest';
 import { ANIMALS, DECOR, HERD_KEYS, PREDATORS, SPRITE_SCALE, ZONES } from '../../game/config';
+import { WALK_SHEETS } from '../../assets/walk';
 import type { DecorPlacement, ZoneLayout } from '../../game/config';
 import type { GameEvent, GameState, HerdKey } from '../../game/types';
 import { cn } from '../../lib/cn';
@@ -108,12 +109,31 @@ export function BoardScene({
 
               {raider && (
                 <span key={`${raider}-${deltaKey}`} className={styles.raider}>
-                  <Sprite
-                    src={PREDATOR_SPRITES[raider]}
-                    emoji={PREDATORS[raider].emoji}
-                    alt={PREDATORS[raider].label}
-                    className={styles.raiderSprite}
-                  />
+                  {/*
+                   * Якщо для хижака є справжні кадри бігу (аркуш від користувача) —
+                   * показуємо стрічку, як у тварин. Інакше лишається статичний
+                   * спрайт: набіг усе одно читається завдяки CSS-кидку .raider.
+                   */}
+                  {WALK_SHEETS[raider] ? (
+                    <span
+                      className={cn(styles.walker, styles.raiderSprite)}
+                      style={{ ['--frames' as string]: String(WALK_SHEETS[raider].frames) }}
+                    >
+                      <img
+                        className={styles.walkStrip}
+                        src={assetUrl(WALK_SHEETS[raider].url)}
+                        alt={PREDATORS[raider].label}
+                        draggable={false}
+                      />
+                    </span>
+                  ) : (
+                    <Sprite
+                      src={PREDATOR_SPRITES[raider]}
+                      emoji={PREDATORS[raider].emoji}
+                      alt={PREDATORS[raider].label}
+                      className={styles.raiderSprite}
+                    />
+                  )}
                 </span>
               )}
 
