@@ -449,26 +449,30 @@
 /* ── Кадри ── */
 
 /*
- * Хода «туди-сюди»: тварина доходить до краю ділянки, розвертається й іде назад.
- * Рух ТІЛЬКИ по горизонталі — вертикальних зсувів тут немає навмисно: будь-який
- * translateY читався як підстрибування. Розворот — швидка зміна scaleX на 4%
- * часу циклу (близько 0.1 с), цього досить, щоб він читався як поворот.
+ * Хода «туди-сюди»: тварина проходить свою смугу двору, розвертається й
+ * вертається — і так по коло. `--lane` зсуває смугу по вертикалі, тому
+ * тварини одного двору йдуть різними доріжками й не накладаються одна на одну.
+ * Рух переважно горизонтальний: вертикальна складова мала (кілька відсотків),
+ * щоб це не читалось як підстрибування.
+ * Розворот — швидка зміна scaleX на 4% часу циклу (≈0.1 с).
  */
 @keyframes up-wander {
   0% {
-    transform: translate3d(0, 0, 0) scaleX(var(--flip)) rotate(0deg);
+    transform: translate3d(0, calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(var(--flip)) rotate(0deg);
   }
   46% {
-    transform: translate3d(var(--dx), 0, 0) scaleX(var(--flip)) rotate(0deg);
+    transform: translate3d(var(--dx), calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(var(--flip)) rotate(0deg);
   }
   50% {
-    transform: translate3d(var(--dx), 0, 0) scaleX(calc(-1 * var(--flip))) rotate(0deg);
+    transform: translate3d(var(--dx), calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0)
+      scaleX(calc(-1 * var(--flip))) rotate(0deg);
   }
   96% {
-    transform: translate3d(0, 0, 0) scaleX(calc(-1 * var(--flip))) rotate(0deg);
+    transform: translate3d(0, calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0)
+      scaleX(calc(-1 * var(--flip))) rotate(0deg);
   }
   100% {
-    transform: translate3d(0, 0, 0) scaleX(var(--flip)) rotate(0deg);
+    transform: translate3d(0, calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(var(--flip)) rotate(0deg);
   }
 }
 

@@ -11,6 +11,7 @@ import type { DecorPlacement, ZoneLayout } from '../../game/config';
 import type { GameEvent, GameState, HerdKey } from '../../game/types';
 import { cn } from '../../lib/cn';
 import { motionFor } from '../lib/motion';
+import { useWalkDistance } from '../lib/useWalkDistance';
 import { Sprite } from './Sprite';
 import { WalkToken } from './WalkToken';
 import styles from './BoardScene.module.css';
@@ -52,6 +53,8 @@ export function BoardScene({
 }: BoardSceneProps) {
   const farm = state.players[state.current]?.farm;
   const zoneMap = zones ?? ZONES;
+  /** Крок тварин міряється в пікселях: від ширини ділянки до її краю. */
+  const tokensRef = useWalkDistance();
   const decorList = decor ?? DECOR;
 
   return (
@@ -67,7 +70,7 @@ export function BoardScene({
           </span>
         ))}
 
-        {HERD_KEYS.map((key) => {
+        {HERD_KEYS.map((key, zoneIndex) => {
           const zone = zoneMap[key];
           const meta = ANIMALS[key];
           const count = farm ? farm[key] : 0;
@@ -150,6 +153,7 @@ export function BoardScene({
               )}
 
               <span
+                ref={tokensRef(zoneIndex)}
                 className={cn(styles.tokens, SPRITE_SCALE[key] > 1 && styles.tokensCentered)}
                 style={{
                   top: `${zone.tokens[0]}%`,
