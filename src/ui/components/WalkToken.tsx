@@ -12,6 +12,12 @@ interface WalkTokenProps {
   /** CSS-змінні руху (темп, фаза, напрямок) з motionFor(). */
   vars: Record<string, string>;
   className?: string;
+  /**
+   * Не використовувати стрічку кадрів навіть якщо вона є — показувати вихідний
+   * статичний спрайт виду. Потрібно там, де арт зі стрічки не пасує до карти
+   * (наприклад малий пес: його намалювали в іншому стилі).
+   */
+  staticSprite?: boolean;
 }
 
 /**
@@ -22,8 +28,8 @@ interface WalkTokenProps {
  * Кадри малює `scripts/build-atlas.mjs`; поки листа немає, гра виглядає як
  * раніше, тому конвеєр можна наповнювати по одному виду.
  */
-export function WalkToken({ species, emoji, vars, className }: WalkTokenProps) {
-  const sheet = WALK_SHEETS[species];
+export function WalkToken({ species, emoji, vars, className, staticSprite }: WalkTokenProps) {
+  const sheet = staticSprite ? undefined : WALK_SHEETS[species];
   const { available } = useAssets();
   const url = sheet ? assetUrl(sheet.url) : null;
   const ready = !!sheet && !!url && available[url] === true;

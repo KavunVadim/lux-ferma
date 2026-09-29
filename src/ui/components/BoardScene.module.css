@@ -87,8 +87,9 @@
 /* ── Спрайти тварин ── */
 
 /*
- * Мінімальна відстань між тваринами: ширина тварини, але не більше чверті
- * ділянки. Крутити тут, якщо треба, щоб тварини стояли щільніше чи вільніше.
+ * Мінімальна відстань між тваринами. Дрібні види (качки) стоять кучніше —
+ * щоб виглядало як справжній пташиний двір; великі отримують нормальний
+ * проміжок, бо інакше налазять одна на одну.
  */
 .tokens {
   --gap: max(1.45em, 25%);
@@ -97,14 +98,23 @@
   flex-wrap: wrap;
   align-content: flex-start;
   gap: 2px;
-  /*
-   * Розсуваємо тварини по горизонталі: коли вони ходять однією смугою, сусіди
-   * накладаються (замір на проді: відстань падала до 1.4px). `column-gap` у
-   * відсотках рахується від ширини ділянки, тому це масштабується разом із нею.
-   */
   column-gap: var(--gap);
   pointer-events: none;
   font-size: clamp(16px, 1.7vw, 34px);
+}
+
+/* Качки — щільна купка: відступ усього 20% комірки. */
+.tokensTight {
+  --gap: 0.2em;
+}
+
+/*
+ * Кози й свині — теж кучніше, але не так тісно, як качки: спрайт більший,
+ * тому при відступі 0.2em сусіди налазили б одна на одну. 0.5em дає щільний
+ * гурт із невеликим просвітом.
+ */
+.tokensSnug {
+  --gap: 0.5em;
 }
 
 /*
@@ -120,97 +130,72 @@
   justify-content: center;
 }
 
+/*
+ * Тварини СТОЯТЬ на своїх місцях. Ходу по двору прибрано навмисно: рух на всю
+ * ширину загону виглядав гірше за спокійну ферму. Лишається тільки цикл кадрів
+ * ходи на місці (ніби тварина переступає лапами) — він додає життя, але нікого
+ * переносить по двору.
+ */
 .slot {
   position: relative;
   display: inline-flex;
   /*
    * 1.45em — базова комірка, `--scale` — видовий масштаб (див. SPRITE_SCALE
-   * у config.ts). Комірка може виходити за межі області `tokens`: це нормально,
-   * тварини й так «гуляють» своїм загоном.
+   * у config.ts).
    */
   width: calc(1.45em * var(--scale, 1));
   height: calc(1.45em * var(--scale, 1));
   /* Без цього флекс стискає великі спрайти, коли ряд не влазить у ділянку. */
   flex: none;
-  /*
-   * ХОДА живе ТУТ, на самій комірці — і це принципово.
-   *
-   * Раніше `transform` ходи стояв на внутрішньому `.token`, а `.slot` лишався
-   * у потоці флексу. Флекс перераховував розкладку щоразу, коли змінювався
-   * вміст, і зсув комірки компенсувався сусідом — тварина «крутила ногами»,
-   * але на екрані стояла на місці (замір: видимий зсув 0px у всіх тварин).
-   * Тепер рухається сама комірка, тому її ніщо не компенсує.
-   */
-  animation: up-wander var(--dur, 4s) ease-in-out var(--delay, 0s) infinite;
 }
 
 /*
- * Погойдування тіла + «перевальцем». Кадри стрічки малюють тільки ноги, тому
- * без цього крок читається погано (особливо в дрібної качки).
+ * Кадри ходи на місці: тварина «переступає», не рухаючись по двору.
+ * Дистанція (--dx) більше не використовується — лишилась у змінних, щоб не
+ * чіпати motionFor.
  */
-.bob {
-  display: block;
-  width: 100%;
-  height: 100%;
-  animation: walk-bob var(--walk-dur, 0.9s) ease-in-out var(--delay, 0s) infinite;
-}
-
-@keyframes walk-bob {
-  0%,
-  50%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  25% {
-    transform: translateY(calc(-1 * var(--bob, 3%))) rotate(var(--waddle, 0deg));
-  }
-  75% {
-    transform: translateY(calc(-0.5 * var(--bob, 3%))) rotate(calc(-0.6 * var(--waddle, 0deg)));
-  }
-}
 
 /*
- * Пил з-під ніг: тварина, яка йде, лишає по собі куряву.
- * Живе на .slot (не на .walker), бо у walker стоїть overflow: hidden.
+ * Кадри ходи на місці: тварина «переступає», не рухаючись по двору.
+ * Дистанція (--dx) більше не використовується — лишилась у змінних, щоб не
+ * чіпати motionFor.
  */
-.slot::after {
-  content: '';
-  position: absolute;
-  left: 8%;
-  bottom: 2%;
-  width: 42%;
-  height: 14%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(222, 203, 156, 0.6), rgba(222, 203, 156, 0) 72%);
-  animation: dust var(--walk-dur, var(--dur)) ease-out var(--delay) infinite;
-  pointer-events: none;
-}
+
+/*
+ * Погойдування тіла + «перевальцем»: БЕЗ вертикальної складової. Будь-який
+ * translateY читався як підстрибування, а тварини мають просто переступати.
+ * Лишається легкий нахил — він дає відчуття кроку, не рухаючи тіло вгору.
+ */
+
+
 
 /* Відпочиваючі не курять — їм пил не потрібен. */
-.token.rest ~ .slot::after,
-.slot:has(.token.rest)::after {
-  animation: none;
-  opacity: 0;
-}
 
-@keyframes dust {
-  0% {
-    opacity: 0;
-    transform: scale(0.55) translateY(0);
-  }
-  22% {
-    opacity: 0.8;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.35) translateY(-34%);
-  }
-}
 
 .token {
   width: 100%;
   height: 100%;
   transform-origin: 50% 85%;
+  /* Кадри стрічки переступають на місці; рух по двору прибрано навмисно. */
+  animation: walk-sway var(--walk-dur, 0.9s) ease-in-out var(--delay, 0s) infinite;
+}
+
+/*
+ * Погойдування «перевальцем»: тільки нахил. Вертикальної складової немає — будь-
+ * який translateY читався як підстрибування, а тварини мають просто переступати.
+ */
+@keyframes walk-sway {
+  0%,
+  50%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(var(--waddle, 0deg));
+  }
+  75% {
+    transform: rotate(calc(-0.6 * var(--waddle, 0deg)));
+  }
 }
 
 /* ── Хода: спрайт-лист зі скрипта build-atlas.mjs ── */
@@ -255,20 +240,8 @@
   animation: none;
 }
 
-/* Пасуться на місці: «вдихають» і опускають голову. */
-.graze {
-  animation: up-graze var(--dur) ease-in-out var(--delay) infinite;
-}
 
-/* Підстрибують — для собак і молодняку. */
-.hop {
-  animation: up-hop var(--dur) ease-in-out var(--delay) infinite;
-}
 
-/* Відпочивають: ледь помітне дихання, іноді опускають голову. */
-.rest {
-  animation: up-rest var(--dur) ease-in-out var(--delay) infinite;
-}
 
 /* Прибуття: тварина «вистрибує» у двір. */
 .arrive {
@@ -341,24 +314,40 @@
 
 /* ── Табличка двору та зміни ── */
 
+/*
+ * Лічильник загону («качки ×3 🧺20»). Висить НАД загоном, притиснутий до його
+ * верхнього краю, а не в куті карти. Великий, з контрастною рамкою й тінню —
+ * його має бути видно з першого погляду, бо це головна цифра ходу.
+ */
 .sign {
   position: absolute;
-  left: 3%;
-  top: -3%;
+  left: 50%;
+  top: -14%;
+  transform: translateX(-50%);
   z-index: 8;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border: 2px solid #4d2f14;
-  border-radius: 10px;
-  background: linear-gradient(#9a6a3c, #6f4520);
-  color: #ffe9c2;
-  font-size: clamp(11px, 0.92vw, 17px);
+  gap: 6px;
+  padding: 5px 14px;
+  border: 3px solid #3a220c;
+  border-radius: 12px;
+  background: linear-gradient(#b07c45, #7d4f24);
+  color: #fff4dc;
+  font-size: clamp(13px, 1.15vw, 21px);
   font-weight: 800;
   white-space: nowrap;
   pointer-events: none;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.28);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+/* Кількість тварин у дворі — акцентом, щоб читалось окремо від назви. */
+.sign i {
+  color: #ffe9a8;
+  font-size: 1.25em;
+  font-style: normal;
 }
 
 .sign b {
@@ -473,103 +462,8 @@
 
 /* ── Кадри ── */
 
-/*
- * Хода «туди-сюди»: тварина проходить свою смугу двору, розвертається й
- * вертається — і так по коло. `--lane-px` зсуває смугу по вертикалі, тому
- * тварини одного двору йдуть різними доріжками й не накладаються одна на одну.
- * Рух переважно горизонтальний: вертикальна складова мала (кілька відсотків),
- * щоб це не читалось як підстрибування.
- *
- * Розворот робиться МИТТЄВО в тій самій точці (46% → 50%): у моменті розвороту
- * `translate3d` повертається в 0, тому без цього стрибка тварина «проїжджала»
- * пів двору задом наперед.
- */
-/*
- * Хода «туди-сюди»: тварина проходить свою смугу двору, розвертається й
- * вертається — і так по колу. `--lane-px` зсуває смугу по вертикалі, тому
- * тварини одного двору йдуть різними доріжками й не накладаються одна на одну.
- *
- * КЛЮЧОВЕ: розворот мусить відбуватися в ТІЙ САМІЙ точці. Якщо на 50% циклу
- * раптом поставити 0 (як було раніше), тварина замість розвороту «телепортується»
- * через пів двору — замір показував стрибок 120 px за один кадр (1000 px/с).
- * Тому обидві половини циклу проходять той самий шлях: 0 → dx → 0, а змінюється
- * лише бік спрайта, і перемикання відбувається у точці, де швидкість дорівнює
- * нулю (на самому краї двору).
- */
-@keyframes up-wander {
-  0% {
-    transform: translate3d(0, calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(var(--flip)) rotate(0deg);
-  }
-  45% {
-    transform: translate3d(var(--dx), calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(var(--flip))
-      rotate(0deg);
-  }
-  /*
-   * Розворот має бути ПОМІТНИМ, а не миттєвим. Якщо перевернути спрайт за один
-   * кадр, око читає це як ривок, хоч позиція не змінюється. Тому спрайт
-   * «сплющується» по ширині (scaleX 0) і розкривається в інший бік — це
-   * читається як поворот на місці. Масштаб плавно проходить через 0 рівно
-   * в точці краю, де швидкість руху теж нульова.
-   */
-  47% {
-    transform: translate3d(var(--dx), calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(0) rotate(0deg);
-  }
-  49% {
-    transform: translate3d(var(--dx), calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0)
-      scaleX(calc(-0.55 * var(--flip))) rotate(0deg);
-  }
-  51% {
-    transform: translate3d(var(--dx), calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0)
-      scaleX(calc(-1 * var(--flip))) rotate(0deg);
-  }
-  98% {
-    transform: translate3d(0, calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(calc(-1 * var(--flip)))
-      rotate(0deg);
-  }
-  100% {
-    transform: translate3d(0, calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(var(--flip)) rotate(0deg);
-  }
-}
 
-@keyframes up-graze {
-  0%,
-  40%,
-  100% {
-    transform: scaleX(var(--flip)) scale(1) rotate(0deg);
-  }
-  55%,
-  75% {
-    /* Пасеться: нахил голови без зсуву вниз — вертикаль читалась як підскок. */
-    transform: scaleX(var(--flip)) scale(1.02, 0.94) rotate(calc(var(--tilt) * 0.6));
-  }
-}
 
-@keyframes up-hop {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scaleX(var(--flip));
-  }
-  25% {
-    transform: translate3d(calc(var(--dx) * 0.6), -22%, 0) scaleX(var(--flip)) scale(1.04, 0.97);
-  }
-  45% {
-    transform: translate3d(calc(var(--dx) * 1.1), 0, 0) scaleX(var(--flip)) scale(0.98, 1.03);
-  }
-  70% {
-    transform: translate3d(0, -12%, 0) scaleX(var(--flip));
-  }
-}
-
-@keyframes up-rest {
-  0%,
-  100% {
-    transform: scaleX(var(--flip)) scale(1);
-  }
-  50% {
-    /* Стоїть: легке дихання без зсуву вниз. */
-    transform: scaleX(var(--flip)) scale(1.03, 0.97);
-  }
-}
 
 @keyframes up-arrive {
   0% {
@@ -716,22 +610,10 @@
 .walker,
 .animalIcon,
 .raider,
-.slot::after,
 .hearts {
   filter: none;
 }
 
-.slot::before {
-  content: '';
-  position: absolute;
-  left: 16%;
-  bottom: 0;
-  width: 68%;
-  height: 17%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(38, 24, 8, 0.34), rgba(38, 24, 8, 0) 70%);
-  pointer-events: none;
-}
 
 .walkStrip {
   will-change: transform;

@@ -45,6 +45,25 @@ export function StartScreen({ hasSave, onStart, onResume, onOpenRules, onOpenSet
 
   return (
     <section className={styles.screen}>
+      {!ready && (
+        <div className={styles.boot} role="status" aria-live="polite">
+          <div className={styles.bootCard}>
+            <span className={styles.bootIcon} aria-hidden>
+              🚜
+            </span>
+            <b className={styles.bootTitle}>Готуємо ферму</b>
+            <p className={styles.bootText}>
+              Завантажуємо спрайти тварин і карту. Це займає кілька секунд на першому запуску —
+              далі гра відкривається миттєво, навіть офлайн.
+            </p>
+            <div className={styles.bootBar}>
+              <span className={styles.bootFill} style={{ width: `${Math.max(4, progress * 100)}%` }} />
+            </div>
+            <span className={styles.bootPercent}>{Math.round(progress * 100)}%</span>
+          </div>
+        </div>
+      )}
+
       <header className={styles.sign}>
         <span className={styles.signRope} aria-hidden />
         <span className={styles.signWheat} aria-hidden>
@@ -73,13 +92,13 @@ export function StartScreen({ hasSave, onStart, onResume, onOpenRules, onOpenSet
       )}
 
       {hasSave && (
-        <button type="button" className={styles.resume} onClick={onResume}>
+        <button type="button" className={styles.resume} onClick={onResume} disabled={!ready}>
           <span className={styles.resumeIcon} aria-hidden>
             ▶
           </span>
           <span className={styles.resumeText}>
             <b>Продовжити партію</b>
-            <i>збережена гра чекає на тебе</i>
+            <i>{ready ? 'збережена гра чекає на тебе' : 'чекаємо на завантаження…'}</i>
           </span>
         </button>
       )}
@@ -135,8 +154,8 @@ export function StartScreen({ hasSave, onStart, onResume, onOpenRules, onOpenSet
           ))}
         </div>
 
-        <Button variant="green" block pulse onClick={() => onStart(names.slice(0, count))}>
-          🎲 Почати гру
+        <Button variant="green" block pulse disabled={!ready} onClick={() => onStart(names.slice(0, count))}>
+          {ready ? '🎲 Почати гру' : '⏳ Готуємо ферму…'}
         </Button>
       </div>
 

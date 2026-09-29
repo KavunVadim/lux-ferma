@@ -11,7 +11,6 @@ import type { DecorPlacement, ZoneLayout } from '../../game/config';
 import type { GameEvent, GameState, HerdKey } from '../../game/types';
 import { cn } from '../../lib/cn';
 import { motionFor } from '../lib/motion';
-import { useWalkDistance } from '../lib/useWalkDistance';
 import { Sprite } from './Sprite';
 import { WalkToken } from './WalkToken';
 import styles from './BoardScene.module.css';
@@ -53,8 +52,6 @@ export function BoardScene({
 }: BoardSceneProps) {
   const farm = state.players[state.current]?.farm;
   const zoneMap = zones ?? ZONES;
-  /** Крок тварин міряється в пікселях: від ширини ділянки до її краю. */
-  const tokensRef = useWalkDistance();
   const decorList = decor ?? DECOR;
 
   return (
@@ -70,7 +67,7 @@ export function BoardScene({
           </span>
         ))}
 
-        {HERD_KEYS.map((key, zoneIndex) => {
+        {HERD_KEYS.map((key) => {
           const zone = zoneMap[key];
           const meta = ANIMALS[key];
           const count = farm ? farm[key] : 0;
@@ -153,8 +150,14 @@ export function BoardScene({
               )}
 
               <span
-                ref={tokensRef(zoneIndex)}
-                className={cn(styles.tokens, SPRITE_SCALE[key] > 1 && styles.tokensCentered)}
+                className={cn(
+                  styles.tokens,
+                  SPRITE_SCALE[key] > 1 && styles.tokensCentered,
+                  // Дрібні види стоять щільніше: качки — купкою, кози й свині
+                  // — щільним гуртом із невеликим просвітом (спрайт більший).
+                  SPRITE_SCALE[key] < 1.3 && styles.tokensTight,
+                  (key === 'goat' || key === 'pig') && styles.tokensSnug,
+                )}
                 style={{
                   top: `${zone.tokens[0]}%`,
                   right: `${zone.tokens[1]}%`,
@@ -174,20 +177,15 @@ export function BoardScene({
                       className={cn(styles.slot, fresh && styles.arrive, leaving && styles.leave)}
                       style={motion.vars}
                     >
-                      {/*
-                       * Окрема обгортка під погойдування тіла й «перевальцем»:
-                       * кадри малюють лише ноги, і без цього дрібна качка
-                       * виглядала як тупання на місці. Обгортка потрібна, щоб
-                       * не зіштовхнути transform із анімацією wander/hop/graze.
-                       */}
-                      <span className={styles.bob}>
-                        <WalkToken
-                          species={key}
-                          emoji={meta.emoji}
-                          vars={motion.vars}
-                          className={cn(styles.token, styles[motion.kind])}
-                        />
-                      </span>
+                      <WalkToken
+                        species={key}
+                        emoji={meta.emoji}
+                        vars={motion.vars}
+                        className={styles.token}
+                        // Малий пес має стояти вихідним спрайтом: кадри з аркуша
+                        // намальовані в іншому стилі й вибивались із карти.
+                        staticSprite={key === 'sdog'}
+                      />
                     </span>
                   );
                 })}
