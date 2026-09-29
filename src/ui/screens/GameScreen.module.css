@@ -1,0 +1,199 @@
+/*
+ * Ігровий екран.
+ *
+ * Телефон (базові стилі): одна колонка фіксованої висоти — кубики зверху,
+ * сітка своїх дворів скролиться, панель дій завжди внизу.
+ *
+ * ПК (`.shellWide`, вмикається через matchMedia, не через медіазапит):
+ * три колонки — рейка гравців, ігрове поле, кубики з подіями — і лоток дій.
+ * Два різні дерева замість CSS-ховання: на телефоні спрайти тварин і
+ * дзеркальні ділянки не рендеряться взагалі.
+ */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+  height: 100dvh;
+  margin-inline: auto;
+  overflow: hidden;
+  padding: calc(var(--safe-top) + 10px) calc(var(--safe-right) + 12px) calc(var(--safe-bottom) + 12px)
+    calc(var(--safe-left) + 12px);
+}
+
+.top {
+  flex: none;
+}
+
+.left {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.diceCard {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+
+.ticker {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  margin: 0;
+  min-height: 2.4em;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+
+/* Сітка дворів займає весь вільний простір і скролиться сама. */
+.farmBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bar {
+  flex: none;
+}
+
+/* ──────────── ПК: одна карта на весь екран, інтерфейс поверх неї ──────────── */
+
+.shellField {
+  position: relative;
+  display: block;
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+  background: #6fa03c;
+}
+
+.fieldLayer {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * Інтерфейс живе у вільних смугах карти: верхня — над затоками й загонами,
+ * нижня — під ними (там лише трава, доріжка й соняшники). Загони з качками,
+ * свинями та кіньми лишаються відкритими по центру.
+ */
+.hud {
+  position: absolute;
+  top: calc(var(--safe-top) + 10px);
+  right: calc(var(--safe-right) + 16px);
+  left: calc(var(--safe-left) + 16px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.hud > * {
+  pointer-events: auto;
+}
+
+.turnChip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 7px;
+  border: 3px solid var(--player-color);
+  border-radius: 999px;
+  background: rgba(24, 16, 6, 0.62);
+  box-shadow: 0 5px 14px rgba(15, 25, 5, 0.3);
+}
+
+.turnAvatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 25%, #fff8e6, color-mix(in srgb, var(--player-color) 32%, #fff3d6));
+  font-size: 21px;
+  line-height: 1;
+}
+
+.turnText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.turnText b {
+  color: #fff5e0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.turnText span {
+  color: rgba(255, 245, 224, 0.78);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.hudIcons {
+  display: flex;
+  gap: 8px;
+}
+
+.footer {
+  position: absolute;
+  right: calc(var(--safe-right) + 16px);
+  bottom: calc(var(--safe-bottom) + 12px);
+  left: calc(var(--safe-left) + 16px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  pointer-events: none;
+}
+
+.footer > * {
+  pointer-events: auto;
+}
+
+.titleSign {
+  padding: 7px 16px 8px;
+  border: 3px solid #4d2f14;
+  border-radius: 14px;
+  background:
+    repeating-linear-gradient(92deg, rgba(0, 0, 0, 0.07) 0 3px, transparent 3px 9px),
+    linear-gradient(#b07f45, #7d5228);
+  color: #fff2d8;
+  font-family: var(--font-display);
+  font-size: clamp(0.95rem, 1.3vw, 1.35rem);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
+  white-space: nowrap;
+  box-shadow:
+    0 6px 14px rgba(15, 25, 5, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.tray {
+  width: min(420px, 32vw);
+}
+
+/* Ці елементи існують лише в мобільній верстці. */
+.leftOverlay,
+.rightOverlay {
+  display: none;
+}

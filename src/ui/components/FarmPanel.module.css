@@ -1,0 +1,230 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 12px 12px 14px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.title {
+  color: var(--barn);
+  font-size: 1.05rem;
+}
+
+.hint {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.pens {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(106px, 1fr));
+  align-content: start;
+  gap: 6px;
+}
+
+@media (min-width: 420px) {
+  .pens {
+    grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
+    gap: 8px;
+  }
+}
+
+.pen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 88px;
+  border: 3px solid var(--wood);
+  border-radius: var(--radius);
+  background: var(--cream);
+  box-shadow: 0 3px 0 var(--shadow);
+}
+
+.filled {
+  border-color: var(--gold-dark);
+}
+
+.sign {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border-bottom: 2px dashed var(--wood-light);
+  background: var(--cream-2);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.signIcon {
+  width: 1.4em;
+  height: 1.4em;
+  font-size: 0.95rem;
+}
+
+.house {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* На вузьких екранах (3 колонки) назва двору не вміщається — спрайт і так усе каже. */
+@media (max-width: 419px) {
+  .house {
+    display: none;
+  }
+}
+
+.count {
+  margin-left: auto;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--hay);
+  color: #5a4014;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.yard {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 2px;
+  padding: 6px 7px 18px;
+  font-size: 1.35rem;
+}
+
+@media (min-width: 420px) {
+  .yard {
+    padding: 8px 9px 20px;
+    font-size: 1.6rem;
+  }
+}
+
+.empty {
+  font-size: 0.78rem;
+  font-style: italic;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.token {
+  width: 1.7em;
+  height: 1.7em;
+  font-size: inherit;
+  animation: token-bob 2.8s ease-in-out infinite;
+}
+
+.token:nth-child(even) {
+  animation-delay: 0.6s;
+}
+
+.more {
+  align-self: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 0.6em;
+  font-weight: 800;
+}
+
+.herd {
+  position: absolute;
+  left: 8px;
+  bottom: 5px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.delta {
+  position: absolute;
+  right: 10px;
+  bottom: 18px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  pointer-events: none;
+  animation: delta-float 1.5s ease-out forwards;
+}
+
+.plus {
+  color: var(--leaf-dark);
+}
+
+.minus {
+  color: var(--barn-dark);
+}
+
+.gain {
+  animation: pen-bump 0.8s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.loss {
+  animation: pen-shake 0.55s ease;
+  border-color: var(--barn);
+}
+
+@keyframes token-bob {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes delta-float {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.7);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(0) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-22px) scale(1);
+  }
+}
+
+@keyframes pen-bump {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--leaf) 40%, transparent);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pen-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}

@@ -1,0 +1,305 @@
+/**
+ * Глобальні стилі та спільні примітиви (кнопки, картки, оверлеї).
+ * Усе, що специфічне для конкретного компонента, живе в його *.module.css.
+ */
+@import './fonts.css';
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 700;
+  background:
+    linear-gradient(180deg, #cdeaf7 0%, #e8f7e0 140px, #8bc34a 141px, #689f38 100%) fixed;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  margin: 0;
+  line-height: 1.1;
+}
+
+button {
+  font-family: inherit;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/*──────────────────────────────── Кнопки ────────────────────────────────*/
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 12px 18px;
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25);
+  transition:
+    transform 0.07s ease,
+    box-shadow 0.07s ease,
+    opacity 0.2s ease;
+  touch-action: manipulation;
+  text-decoration: none;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--barn {
+  background: linear-gradient(180deg, #c8523f, var(--barn-dark));
+}
+
+.btn--green {
+  background: linear-gradient(180deg, #6ab04c, var(--leaf-dark));
+}
+
+.btn--gold {
+  background: linear-gradient(180deg, #f3c268, var(--gold-dark));
+  color: var(--ink);
+}
+
+.btn--wood {
+  background: linear-gradient(180deg, var(--wood-light), var(--wood));
+}
+
+.btn--ghost {
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  color: var(--ink);
+  border: 3px solid var(--wood);
+  box-shadow: none;
+}
+
+.btn--sm {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn--pulse:not(:disabled) {
+  animation: btn-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes btn-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+/*────────────────────────────── Іконка-кнопка ──────────────────────────────*/
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  color: var(--ink);
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.icon-btn:active {
+  transform: scale(0.92);
+}
+
+/*────────────────────────────── Картки / чіпи ──────────────────────────────*/
+.card {
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  border: 3px solid var(--wood);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.muted {
+  color: var(--ink-soft);
+}
+
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border-radius: 50%;
+}
+
+/*──────────────────────────────── Оверлеї ────────────────────────────────*/
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(20, 12, 4, 0.55);
+  animation: overlay-in 0.2s ease;
+}
+
+.overlay--center {
+  align-items: center;
+  padding: 16px;
+}
+
+/*
+ * Плаваюча панель: показує кубики й результат, не затемнюючи поле —
+ * анімації на карті (набіг хижака, прибуття тварин) мусять лишатися видними.
+ * Фон прозорий для кліків, клікається лише сама картка.
+ *
+ * На телефоні плаваючого немає: широка панель на пів екрана перекрила б усе,
+ * тому там це звичайна панель знизу.
+ */
+.overlay--float {
+  align-items: center;
+  justify-content: flex-end;
+  padding: 16px clamp(16px, 3vw, 42px);
+  background: transparent;
+  pointer-events: none;
+}
+
+.overlay--float > * {
+  pointer-events: auto;
+}
+
+@media (max-width: 999px) {
+  .overlay--float {
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+    background: rgba(20, 12, 4, 0.55);
+  }
+}
+
+#root {
+  isolation: isolate;
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sheet {
+  width: 100%;
+  max-width: 520px;
+  max-height: 86dvh;
+  overflow-y: auto;
+  padding: 16px 14px calc(var(--safe-bottom) + 18px);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--bg);
+  box-shadow: 0 -6px 24px var(--shadow);
+  animation: sheet-up 0.35s cubic-bezier(0.2, 1.1, 0.4, 1);
+  -webkit-overflow-scrolling: touch;
+}
+
+.sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sheet h2 {
+  color: var(--barn);
+  font-size: 1.35rem;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90dvh;
+  overflow: hidden;
+  border: 3px solid var(--wood);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: 0 10px 0 var(--shadow);
+  animation: modal-in 0.4s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7) translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,94 @@
+/**
+ * Дизайн-токени гри: палітра ферми, радіуси, шрифти, безпечні зони.
+ * Світла тема — за замовчуванням, темна — за системою або data-theme="dark".
+ */
+:root {
+  /* палітра з прототипу */
+  --bg: #faf3e0;
+  --bg-plank: #f3e9ce;
+  --ink: #2e2013;
+  --ink-soft: #6b5b47;
+  --card: #fffdf8;
+  --card-2: #fff7e6;
+  --barn: #b33f32;
+  --barn-dark: #8f2f26;
+  --leaf: #4b7f52;
+  --leaf-dark: #38603d;
+  --gold: #e8a94a;
+  --gold-dark: #c78a2e;
+  --sky: #5b8dbe;
+  --line: rgba(46, 32, 19, 0.14);
+  --shadow: rgba(46, 32, 19, 0.18);
+
+  /* дерево — акценти карт і «дерев'яних» панелей */
+  --wood: #8a5a33;
+  --wood-dark: #66421f;
+  --wood-light: #c9a06a;
+  --hay: #f7c948;
+  --cream: #fff8ea;
+  --cream-2: #ffefd0;
+
+  /* геометрія */
+  --radius-sm: 12px;
+  --radius: 18px;
+  --radius-lg: 24px;
+  --tap: 48px;
+
+  /* типографіка */
+  --font-display: 'M PLUS Rounded 1c', 'Nunito', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, -apple-system, sans-serif;
+
+  /* безпечні зони iOS/Android */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #201a12;
+    --bg-plank: #241d13;
+    --ink: #f5ecd9;
+    --ink-soft: #c9bba0;
+    --card: #2b2318;
+    --card-2: #33291a;
+    --barn: #e06a57;
+    --barn-dark: #c14f3d;
+    --leaf: #7cb585;
+    --leaf-dark: #5b9463;
+    --gold: #f0be6e;
+    --gold-dark: #d69e42;
+    --sky: #7fadda;
+    --line: rgba(245, 236, 217, 0.16);
+    --shadow: rgba(0, 0, 0, 0.5);
+    --wood: #7a5231;
+    --wood-dark: #55401f;
+    --wood-light: #a9885c;
+    --cream: #2b2318;
+    --cream-2: #33291a;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #201a12;
+  --bg-plank: #241d13;
+  --ink: #f5ecd9;
+  --ink-soft: #c9bba0;
+  --card: #2b2318;
+  --card-2: #33291a;
+  --barn: #e06a57;
+  --barn-dark: #c14f3d;
+  --leaf: #7cb585;
+  --leaf-dark: #5b9463;
+  --gold: #f0be6e;
+  --gold-dark: #d69e42;
+  --sky: #7fadda;
+  --line: rgba(245, 236, 217, 0.16);
+  --shadow: rgba(0, 0, 0, 0.5);
+  --wood: #7a5231;
+  --wood-dark: #55401f;
+  --wood-light: #a9885c;
+  --cream: #2b2318;
+  --cream-2: #33291a;
+}

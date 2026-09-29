@@ -1,0 +1,11 @@
+.bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.9fr);
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.trade,
+.main {
+  width: 100%;
+}

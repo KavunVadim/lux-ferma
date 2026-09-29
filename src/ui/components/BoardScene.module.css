@@ -1,0 +1,568 @@
+/*
+ * Ігрове поле ПК: одна карта ферми на весь екран.
+ *
+ * Полотно тримає пропорції арта (1664×928) і масштабується так, щоб накрити
+ * екран повністю — як `background-size: cover`, але координати дворів лишаються
+ * у відсотках від полотна, тож спрайти стоять там, де намальовані загони.
+ * Мапа спільна для всіх гравців: вона показує те, що зараз у дворі поточного.
+ */
+
+.field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #6fa03c;
+}
+
+.canvas {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, calc(100vh * 1.7931));
+  aspect-ratio: 1664 / 928;
+  transform: translate(-50%, -50%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.decor {
+  position: absolute;
+  pointer-events: none;
+}
+
+.decorSprite {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.25));
+}
+
+.zone {
+  position: absolute;
+  padding: 0;
+  border: 2px dashed transparent;
+  border-radius: 18px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease,
+    background 0.3s ease;
+}
+
+.zone:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.zone:focus-visible {
+  outline: 3px solid var(--hay);
+  outline-offset: 2px;
+}
+
+.selected {
+  box-shadow: 0 0 0 4px var(--hay);
+}
+
+.gain {
+  box-shadow: 0 0 0 5px var(--hay);
+  background: rgba(247, 201, 72, 0.18);
+}
+
+.lost {
+  animation: zone-shake 0.55s ease;
+  box-shadow: 0 0 0 4px var(--barn);
+  background: rgba(179, 63, 50, 0.16);
+}
+
+.building {
+  position: absolute;
+  pointer-events: none;
+  object-fit: contain;
+  object-position: bottom left;
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.3));
+}
+
+/* ── Спрайти тварин ── */
+
+.tokens {
+  position: absolute;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 2px;
+  pointer-events: none;
+  font-size: clamp(16px, 1.7vw, 34px);
+}
+
+.slot {
+  position: relative;
+  display: inline-flex;
+  width: 1.45em;
+  height: 1.45em;
+}
+
+/*
+ * Пил з-під ніг: тварина, яка йде, лишає по собі куряву.
+ * Живе на .slot (не на .walker), бо у walker стоїть overflow: hidden.
+ */
+.slot::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  bottom: 2%;
+  width: 42%;
+  height: 14%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(222, 203, 156, 0.6), rgba(222, 203, 156, 0) 72%);
+  animation: dust var(--walk-dur, var(--dur)) ease-out var(--delay) infinite;
+  pointer-events: none;
+}
+
+/* Відпочиваючі не курять — їм пил не потрібен. */
+.token.rest ~ .slot::after,
+.slot:has(.token.rest)::after {
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes dust {
+  0% {
+    opacity: 0;
+    transform: scale(0.55) translateY(0);
+  }
+  22% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35) translateY(-34%);
+  }
+}
+
+.token {
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 85%;
+}
+
+/* ── Хода: спрайт-лист зі скрипта build-atlas.mjs ── */
+
+.walker {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/*
+ * Стрічка кадрів: одна комірка квадратна, тому крок `--frames` × 100%
+ * (100% = ширина контейнера) показує рівно наступний кадр.
+ */
+.walkStrip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: auto;
+  animation: walk-strip var(--walk-dur) steps(var(--frames)) var(--delay) infinite;
+}
+
+@keyframes walk-strip {
+  from {
+    left: 0;
+  }
+  to {
+    left: calc(-1 * var(--frames) * 100%);
+  }
+}
+
+/* Пасуться: кілька кроків у різні боки з нахилом. */
+.wander {
+  animation: up-wander var(--dur) ease-in-out var(--delay) infinite;
+}
+
+/* Пасуться на місці: «вдихають» і опускають голову. */
+.graze {
+  animation: up-graze var(--dur) ease-in-out var(--delay) infinite;
+}
+
+/* Підстрибують — для собак і молодняку. */
+.hop {
+  animation: up-hop var(--dur) ease-in-out var(--delay) infinite;
+}
+
+/* Відпочивають: ледь помітне дихання, іноді опускають голову. */
+.rest {
+  animation: up-rest var(--dur) ease-in-out var(--delay) infinite;
+}
+
+/* Прибуття: тварина «вистрибує» у двір. */
+.arrive {
+  animation: up-arrive 0.7s cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
+}
+
+/* Втеча: хижак тягне тварину за межі двору. */
+.leave {
+  animation: up-leave 0.9s ease-in both;
+}
+
+/* ── Хижак ── */
+
+.raider {
+  position: absolute;
+  top: 26%;
+  left: 8%;
+  z-index: 9;
+  pointer-events: none;
+  animation:
+    raid-in 0.6s cubic-bezier(0.25, 0.9, 0.3, 1) both,
+    raid-out 0.85s ease-in 0.95s both;
+}
+
+.raiderSprite {
+  height: clamp(46px, 4.8vw, 92px);
+  width: auto;
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.35));
+}
+
+/* ── Пес-охоронець ── */
+
+.guard {
+  position: absolute;
+  bottom: 8%;
+  left: 6%;
+  z-index: 10;
+  pointer-events: none;
+  animation: guard-lunge 1.05s cubic-bezier(0.25, 0.9, 0.3, 1) both;
+}
+
+.guardSprite {
+  height: clamp(40px, 4vw, 76px);
+  width: auto;
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.32));
+}
+
+/* ── Табличка двору та зміни ── */
+
+.sign {
+  position: absolute;
+  left: 3%;
+  top: -3%;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 2px solid #4d2f14;
+  border-radius: 10px;
+  background: linear-gradient(#9a6a3c, #6f4520);
+  color: #ffe9c2;
+  font-size: clamp(11px, 0.92vw, 17px);
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.28);
+}
+
+.sign b {
+  font-family: var(--font-display);
+}
+
+.sign i {
+  font-style: normal;
+  opacity: 0.9;
+}
+
+.sign em {
+  font-style: normal;
+  font-size: 0.86em;
+  opacity: 0.72;
+}
+
+.delta {
+  position: absolute;
+  right: 5%;
+  top: 26%;
+  z-index: 10;
+  font-family: var(--font-display);
+  font-size: clamp(17px, 1.6vw, 30px);
+  font-weight: 900;
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.45),
+    0 0 14px rgba(0, 0, 0, 0.5);
+  animation: up-float 1.7s ease-out both;
+  pointer-events: none;
+}
+
+.deltaUp {
+  color: #e6ffb4;
+}
+
+.deltaDown {
+  color: #ffc0b4;
+}
+
+.more {
+  align-self: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 0.66em;
+  font-weight: 800;
+}
+
+/* ── Сердечка при народженні ── */
+
+.hearts {
+  position: absolute;
+  left: 50%;
+  top: 4%;
+  z-index: 11;
+  display: flex;
+  gap: 4px;
+  font-size: clamp(19px, 1.8vw, 34px);
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.55));
+  pointer-events: none;
+  animation: hearts-up 2.3s ease-out both;
+}
+
+.hearts span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.hearts span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes hearts-up {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 25%) scale(0.45);
+  }
+  14% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1.12);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(-50%, -55%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -145%) scale(0.95);
+  }
+}
+
+/* ── Перемикання карти на новому ході ── */
+
+/*
+ * Анімація грає при кожному монтуванні поля, а GameScreen дає полю
+ * key={state.current} — тому зміна гравця читається як «карта перемкнулась».
+ */
+.field[data-swap] {
+  animation: turn-swap 0.6s ease both;
+}
+@keyframes turn-swap {
+  from {
+    opacity: 0.35;
+    filter: saturate(0.55) brightness(1.08);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+/* ── Кадри ── */
+
+@keyframes up-wander {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scaleX(var(--flip)) rotate(var(--tilt));
+  }
+  25% {
+    transform: translate3d(var(--dx), calc(var(--dy) * -1), 0) scaleX(var(--flip))
+      rotate(calc(var(--tilt) * -1));
+  }
+  55% {
+    transform: translate3d(calc(var(--dx) * 0.3), var(--dy), 0) scaleX(var(--flip)) rotate(var(--tilt));
+  }
+  80% {
+    transform: translate3d(calc(var(--dx) * -0.7), calc(var(--dy) * 0.4), 0) scaleX(var(--flip))
+      rotate(calc(var(--tilt) * -0.6));
+  }
+}
+
+@keyframes up-graze {
+  0%,
+  40%,
+  100% {
+    transform: scaleX(var(--flip)) scale(1) rotate(0deg);
+  }
+  55%,
+  75% {
+    transform: scaleX(var(--flip)) translate3d(0, 6%, 0) scale(1.02, 0.93) rotate(calc(var(--tilt) * 0.5));
+  }
+}
+
+@keyframes up-hop {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scaleX(var(--flip));
+  }
+  25% {
+    transform: translate3d(calc(var(--dx) * 0.6), -22%, 0) scaleX(var(--flip)) scale(1.04, 0.97);
+  }
+  45% {
+    transform: translate3d(calc(var(--dx) * 1.1), 0, 0) scaleX(var(--flip)) scale(0.98, 1.03);
+  }
+  70% {
+    transform: translate3d(0, -12%, 0) scaleX(var(--flip));
+  }
+}
+
+@keyframes up-rest {
+  0%,
+  100% {
+    transform: scaleX(var(--flip)) scale(1);
+  }
+  50% {
+    transform: scaleX(var(--flip)) scale(1.03, 0.96) translateY(3%);
+  }
+}
+
+@keyframes up-arrive {
+  0% {
+    opacity: 0;
+    transform: translate3d(40%, -70%, 0) scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1.16);
+  }
+  80% {
+    transform: translate3d(0, -6%, 0) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes up-leave {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  30% {
+    transform: translate3d(-10%, -8%, 0) scale(1.05) rotate(-6deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-70%, -150%, 0) scale(0.35) rotate(-28deg);
+  }
+}
+
+@keyframes raid-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(-520%, -160%, 0) scale(0.75);
+  }
+  35% {
+    opacity: 1;
+  }
+  75% {
+    transform: translate3d(6%, 0, 0) scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes raid-out {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-520%, -190%, 0) scale(0.8);
+  }
+}
+
+/* Пес кидається на хижака: ривок уперед, гавкіт, повернення до будки. */
+@keyframes guard-lunge {
+  0% {
+    opacity: 0;
+    transform: translate3d(-30%, 20%, 0) scale(0.9);
+  }
+  20% {
+    opacity: 1;
+    transform: translate3d(20%, -10%, 0) scale(1.04) rotate(-6deg);
+  }
+  38% {
+    transform: translate3d(120%, -22%, 0) scale(1.12) rotate(-10deg);
+  }
+  46% {
+    transform: translate3d(112%, -18%, 0) scale(1.06) rotate(-4deg);
+  }
+  56% {
+    transform: translate3d(150%, -26%, 0) scale(1.14) rotate(-12deg);
+  }
+  78% {
+    transform: translate3d(40%, -6%, 0) scale(1.02) rotate(-3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes up-float {
+  0% {
+    opacity: 0;
+    transform: translateY(35%) scale(0.75);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-165%) scale(1.15);
+  }
+}
+
+@keyframes zone-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-7px) rotate(-0.4deg);
+  }
+  45% {
+    transform: translateX(6px) rotate(0.4deg);
+  }
+  70% {
+    transform: translateX(-3px);
+  }
+}
+
+/* Повага до системних налаштувань: без руху, але все лишається читабельним. */
+@media (prefers-reduced-motion: reduce) {
+  .wander,
+  .graze,
+  .hop,
+  .arrive,
+  .leave,
+  .raider,
+  .delta {
+    animation: none;
+  }
+}

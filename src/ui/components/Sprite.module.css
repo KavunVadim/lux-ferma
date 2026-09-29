@@ -1,0 +1,13 @@
+.image {
+  display: block;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.fallback {
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-size: inherit;
+}

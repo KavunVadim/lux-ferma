@@ -1,0 +1,36 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--barn);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+}
+
+/* На карті назва мусить читатися на траві й дереві — робимо вивіску. */
+.brandSign {
+  padding: 6px 18px 7px;
+  border: 3px solid #4d2f14;
+  border-radius: 14px;
+  background:
+    repeating-linear-gradient(92deg, rgba(0, 0, 0, 0.07) 0 3px, transparent 3px 9px),
+    linear-gradient(#b07f45, #7d5228);
+  color: #fff2d8;
+  font-size: clamp(1rem, 1.5vw, 1.45rem);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    0 6px 14px rgba(15, 25, 5, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}

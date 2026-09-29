@@ -1,0 +1,127 @@
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Нижня смуга ПК: чипси в один рядок, компактні й не затуляють двори. */
+.row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.row .card {
+  gap: 7px;
+  padding: 5px 10px;
+  border-radius: 13px;
+}
+
+.row .active {
+  transform: translateY(-3px);
+}
+
+.row .avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+}
+
+.row .name {
+  font-size: 0.86rem;
+}
+
+.row .track {
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.row .pip {
+  height: 4px;
+}
+
+.row .score {
+  font-size: 0.9rem;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 3px solid color-mix(in srgb, var(--wood) 55%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  box-shadow: 0 4px 10px rgba(20, 30, 8, 0.18);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.active {
+  transform: translateX(6px);
+  border-color: var(--player-color);
+  background: color-mix(in srgb, var(--player-color) 14%, var(--card));
+  box-shadow:
+    0 6px 16px rgba(20, 30, 8, 0.26),
+    0 0 0 3px color-mix(in srgb, var(--player-color) 25%, transparent);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid color-mix(in srgb, var(--player-color) 60%, transparent);
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 25%, #fff8e6, color-mix(in srgb, var(--player-color) 30%, #fff3d6));
+  font-size: 22px;
+  line-height: 1;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crown {
+  font-size: 0.9em;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
+}
+
+.track {
+  display: flex;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.pip {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--wood) 35%, transparent);
+}
+
+.pipOn {
+  background: var(--player-color);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--player-color) 60%, transparent);
+}
+
+.score {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--player-color);
+  white-space: nowrap;
+}

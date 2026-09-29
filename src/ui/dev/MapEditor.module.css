@@ -1,0 +1,142 @@
+/* Оверлей редактора карти: прозорі рамки поверх самої карти. */
+
+.root {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  touch-action: none;
+  user-select: none;
+}
+
+.grid {
+  background-image:
+    repeating-linear-gradient(to right, rgba(255, 0, 0, 0.35) 0 1px, transparent 1px 10%),
+    repeating-linear-gradient(to bottom, rgba(255, 0, 0, 0.35) 0 1px, transparent 1px 10%);
+}
+
+.box {
+  position: absolute;
+  border: 1px dashed rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: move;
+  pointer-events: auto;
+}
+
+/* Рамка під курсором піднімається над сусідніми (загони на карті перетинаються). */
+.box:hover {
+  z-index: 6;
+}
+
+.zone {
+  border-color: #ffe066;
+  background: rgba(255, 224, 102, 0.08);
+}
+
+.building {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.tokens {
+  border-color: #4dabf7;
+  background: rgba(77, 171, 247, 0.12);
+}
+
+.decor {
+  border-color: #b197fc;
+  background: rgba(177, 151, 252, 0.1);
+  z-index: 3;
+}
+
+.tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1px 5px;
+  border-radius: 0 0 6px 0;
+  background: rgba(15, 15, 15, 0.78);
+  color: #fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Маркери розміру — над усіма рамками (батько без z-index, тому 9 діє в корені). */
+.handle {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  z-index: 9;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #111;
+  border-radius: 3px;
+  background: #fff;
+  cursor: nwse-resize;
+}
+
+.panel {
+  position: fixed;
+  left: 14px;
+  bottom: 14px;
+  z-index: 80;
+  display: grid;
+  gap: 8px;
+  width: min(460px, 46vw);
+  max-height: 46vh;
+  padding: 10px 12px;
+  border: 2px solid #111;
+  border-radius: 12px;
+  background: rgba(18, 18, 18, 0.94);
+  color: #f5f5f5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  overflow: auto;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.hint {
+  margin: 0;
+  color: #b9b9b9;
+  line-height: 1.5;
+}
+
+.code {
+  margin: 0;
+  padding: 8px;
+  max-height: 22vh;
+  overflow: auto;
+  border-radius: 8px;
+  background: #000;
+  color: #9ef0a5;
+  white-space: pre;
+}
+
+.panelActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.panelBtn {
+  padding: 5px 9px;
+  border: 1px solid #555;
+  border-radius: 7px;
+  background: #262626;
+  color: #f5f5f5;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.panelBtn:hover {
+  background: #333;
+}
