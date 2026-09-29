@@ -264,8 +264,8 @@ export const SPRITE_SCALE: Record<HerdKey, number> = {
   pig: 1,
   horse: 1,
   cow: 1,
-  sdog: 1.45,
-  bdog: 1.5,
+  sdog: 1.6,
+  bdog: 2,
 };
 
 export interface DecorPlacement {
