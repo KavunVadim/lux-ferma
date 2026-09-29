@@ -16,7 +16,7 @@ const size = (p) => (ok(p) ? `${(statSync(p).size / 1024).toFixed(0)} КБ` : ''
 const rows = [];
 
 /* ── Хода: справжні кадри проти демо ── */
-for (const species of SPECIES) {
+for (const species of [...SPECIES, 'fox', 'bear']) {
   const dir = `assets-src/walk/${species}`;
   const frames = ok(dir) ? readdirSync(dir).filter((f) => /\.png$/i.test(f)).length : 0;
   rows.push({

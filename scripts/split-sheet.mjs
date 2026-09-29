@@ -61,6 +61,9 @@ function gaps(axis, limit, otherLimit, pick) {
 }
 
 const isSprite = (i) => {
+  // Прозорі пікселі — це фон, а не «чорнило»: аркуші бувають і з білим фоном,
+  // і з прозорим (тоді RGB під нульовою альфою чорний).
+  if (data[i + 3] <= 16) return false;
   const r = data[i];
   const g = data[i + 1];
   const b = data[i + 2];
@@ -121,7 +124,8 @@ while (stack.length) {
   push(x, y + 1);
   push(x, y - 1);
 }
-for (let p = 0; p < W * H; p += 1) data[p * 4 + 3] = alpha[p];
+// Спершу мінімум із початковою альфою, щоб не зробити прозорий фон чорним.
+for (let p = 0; p < W * H; p += 1) data[p * 4 + 3] = Math.min(data[p * 4 + 3], alpha[p]);
 
 /** Межі непорожнього прямокутника у межах заданої області. */
 function inkBox(x0, y0, x1, y1) {

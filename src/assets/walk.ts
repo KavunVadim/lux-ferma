@@ -21,9 +21,10 @@ export const WALK_SHEETS: Partial<Record<WalkKey, WalkSheet>> = {
   duck: { url: 'assets/walk/duck.webp', frames: 6 },
   goat: { url: 'assets/walk/goat.webp', frames: 6 },
   pig: { url: 'assets/walk/pig.webp', frames: 6 },
-  horse: { url: 'assets/walk/horse.webp', frames: 8 },
+  horse: { url: 'assets/walk/horse.webp', frames: 6 },
   cow: { url: 'assets/walk/cow.webp', frames: 6 },
   sdog: { url: 'assets/walk/sdog.webp', frames: 6 },
-  bdog: { url: 'assets/walk/bdog.webp', frames: 8 },
+  bdog: { url: 'assets/walk/bdog.webp', frames: 6 },
   bear: { url: 'assets/walk/bear.webp', frames: 6 },
+  fox: { url: 'assets/walk/fox.webp', frames: 6 },
 };
