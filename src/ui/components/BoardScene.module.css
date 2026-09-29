@@ -448,21 +448,27 @@
 
 /* ── Кадри ── */
 
+/*
+ * Хода «туди-сюди»: тварина доходить до краю ділянки, розвертається й іде назад.
+ * Рух ТІЛЬКИ по горизонталі — вертикальних зсувів тут немає навмисно: будь-який
+ * translateY читався як підстрибування. Розворот — швидка зміна scaleX на 4%
+ * часу циклу (близько 0.1 с), цього досить, щоб він читався як поворот.
+ */
 @keyframes up-wander {
-  0%,
+  0% {
+    transform: translate3d(0, 0, 0) scaleX(var(--flip)) rotate(0deg);
+  }
+  46% {
+    transform: translate3d(var(--dx), 0, 0) scaleX(var(--flip)) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(var(--dx), 0, 0) scaleX(calc(-1 * var(--flip))) rotate(0deg);
+  }
+  96% {
+    transform: translate3d(0, 0, 0) scaleX(calc(-1 * var(--flip))) rotate(0deg);
+  }
   100% {
-    transform: translate3d(0, 0, 0) scaleX(var(--flip)) rotate(var(--tilt));
-  }
-  25% {
-    transform: translate3d(var(--dx), calc(var(--dy) * -1), 0) scaleX(var(--flip))
-      rotate(calc(var(--tilt) * -1));
-  }
-  55% {
-    transform: translate3d(calc(var(--dx) * 0.3), var(--dy), 0) scaleX(var(--flip)) rotate(var(--tilt));
-  }
-  80% {
-    transform: translate3d(calc(var(--dx) * -0.7), calc(var(--dy) * 0.4), 0) scaleX(var(--flip))
-      rotate(calc(var(--tilt) * -0.6));
+    transform: translate3d(0, 0, 0) scaleX(var(--flip)) rotate(0deg);
   }
 }
 
@@ -474,7 +480,8 @@
   }
   55%,
   75% {
-    transform: scaleX(var(--flip)) translate3d(0, 6%, 0) scale(1.02, 0.93) rotate(calc(var(--tilt) * 0.5));
+    /* Пасеться: нахил голови без зсуву вниз — вертикаль читалась як підскок. */
+    transform: scaleX(var(--flip)) scale(1.02, 0.94) rotate(calc(var(--tilt) * 0.6));
   }
 }
 
@@ -500,7 +507,8 @@
     transform: scaleX(var(--flip)) scale(1);
   }
   50% {
-    transform: scaleX(var(--flip)) scale(1.03, 0.96) translateY(3%);
+    /* Стоїть: легке дихання без зсуву вниз. */
+    transform: scaleX(var(--flip)) scale(1.03, 0.97);
   }
 }
 

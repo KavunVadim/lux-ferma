@@ -231,6 +231,20 @@ console.log(`\nвидимий ${visibleFrames} із ${timeline.length} замі�
 await shoot('/tmp/animals-raid.png');
 await evaluate(`Math.random = window.__origRandom;`);
 
+/* ── Кнопка «Показати набіг лисиці» в налаштуваннях ── */
+await sleep(1200);
+await clickText('⚙️');
+await sleep(800);
+const openedSettings = await evaluate(`!!document.querySelector('.sheet')`);
+const clickedPreview = await clickText('Показати набіг лисиці');
+await sleep(700);
+const preview = await evaluate(raidProbe);
+console.log(
+  `\nкнопка перевірки анімацій: налаштування ${openedSettings ? 'відкрились ✓' : 'не відкрились ✗'}, ` +
+    `натиснулась ${clickedPreview ? '✓' : '✗'} → ${preview ? `x=${preview.x} прозорість ${preview.op} ${preview.видно ? 'ВИДНО ✓' : '—'}` : 'набігу немає ✗'}`,
+);
+await shoot('/tmp/preview-raid.png');
+
 console.log(
   `\nВИСНОВОК: битих зображень ${broken}, емодзі-фолбеків ${emoji}` +
     `${broken === 0 && emoji === 0 ? ' — усі тварини видно ✅' : ' — є проблема ❌'}`,

@@ -168,6 +168,35 @@ const duck = await evaluate(`(() => {
 console.log('погойдування:', JSON.stringify({ ...bobA, other: bobB.transform, shiftY: +(bobY(bobB.transform) - bobY(bobA.transform)).toFixed(2) }));
 console.log('качка:', JSON.stringify(duck));
 
+/* ── Хода «туди-сюди»: горизонталь + розворот, без вертикалі ── */
+const walkerProbe = `(() => {
+  const slot = [...document.querySelectorAll('[class*="slot"]')].find((el) => el.querySelector('[class*="walker"]'));
+  const walker = slot?.querySelector('[class*="walker"]');
+  if (!walker) return null;
+  const m = getComputedStyle(walker).transform;
+  const nums = m.startsWith('matrix3d')
+    ? m.slice(9, -1).split(',').map(Number)
+    : m.slice(7, -1).split(',').map(Number);
+  return {
+    x: +(m.startsWith('matrix3d') ? nums[12] : nums[4]).toFixed(1),
+    y: +(m.startsWith('matrix3d') ? nums[13] : nums[5]).toFixed(1),
+    scaleX: +(m.startsWith('matrix3d') ? nums[0] : nums[0]).toFixed(2),
+  };
+})()`;
+const walkPath = [];
+for (let step = 0; step < 12; step += 1) {
+  const sample = await evaluate(walkerProbe);
+  if (sample) walkPath.push(sample);
+  await sleep(180);
+}
+const xs = walkPath.map((p) => p.x);
+const ys = walkPath.map((p) => p.y);
+const flips = new Set(walkPath.map((p) => (p.scaleX < 0 ? 'ліворуч' : 'праворуч')));
+console.log(
+  `хода: x ${Math.min(...xs)} … ${Math.max(...xs)} (розмах ${(Math.max(...xs) - Math.min(...xs)).toFixed(0)}px) · ` +
+    `максимальний зсув по вертикалі ${Math.max(...ys.map(Math.abs)).toFixed(1)}px · напрямки: ${[...flips].join(' / ')}`,
+);
+
 const cell = first.stripWidth / Number(first.frames || 1);
 const parseX = (m) => {
   if (!m || m === 'none') return 0;

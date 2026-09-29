@@ -26,7 +26,11 @@ export function noise(seed: number): number {
   return ((x < 0 ? -x : x) % 100000) / 100000;
 }
 
-const KINDS: readonly MotionKind[] = ['wander', 'graze', 'hop', 'rest'];
+/**
+ * Набір рухів. `hop` (підстрибування) прибрано навмисно: тварини мають ходити,
+ * а не скакати — стрибки читались як «зайці на фермі».
+ */
+const KINDS: readonly MotionKind[] = ['wander', 'graze', 'rest'];
 
 /** Параметри руху для спрайта: вид анімації, тривалість, зсув, амплітуда. */
 export function motionFor(key: string, index: number): Motion {
@@ -54,9 +58,13 @@ export function motionFor(key: string, index: number): Motion {
       '--waddle': `${style?.waddle ?? 2}deg`,
       // Негативна затримка — спрайт стартує посеред циклу, тому рухи не синхронні.
       '--delay': `-${(third * 4).toFixed(2)}s`,
-      '--dx': `${(2 + fourth * 6).toFixed(1)}%`,
-      '--dy': `${(1.5 + second * 4).toFixed(1)}%`,
+      // Дистанція ходи «туди-сюди»: у відсотках від розміру тварини. Було 2-8%
+      // (1-3 px) — крок не читався взагалі.
+      '--dx': `${(40 + fourth * 80).toFixed(0)}%`,
+      // `--tilt` використовує пасіння (нахил голови), `--dy` лишається для
+      // вимкненого руху «підстрибування» — обидва потрібні, хоч і не завжди винні.
       '--tilt': `${(second * 6 - 3).toFixed(1)}deg`,
+      '--dy': `${(1.5 + second * 4).toFixed(1)}%`,
       '--flip': fourth > 0.5 ? '-1' : '1',
     },
   };

@@ -280,18 +280,21 @@ export interface WalkStyle {
 }
 
 /**
- * Хода за видом. Кадри малюють ноги, але тіло в арті майже не рухається, тому
- * дрібні тварини (качка) виглядали як «тупання на місці». Тут задаємо темп,
- * погойдування й перевальцем — разом це читається як справжня хода.
+ * Хода за видом. Кадри малюють лише ноги, тому дрібна качка читалась як тупання
+ * на місці — звідси темп і легкий нахил «перевальцем».
+ *
+ * `bob` — вертикальне погойдування тіла. Свідомо 0: на полі це виглядало як
+ * підскакування, а тварини мають просто йти. Якщо колись захочеться повернути —
+ * тут достатньо поставити 3-5 (%).
  */
 export const WALK_STYLE: Record<HerdKey, WalkStyle> = {
-  duck: { speed: 0.7, bob: 8, waddle: 7 },
-  goat: { speed: 1, bob: 6, waddle: 3 },
-  pig: { speed: 0.95, bob: 5.5, waddle: 2.5 },
-  horse: { speed: 0.85, bob: 7, waddle: 2 },
-  cow: { speed: 1.15, bob: 6, waddle: 2 },
-  sdog: { speed: 0.8, bob: 7, waddle: 3.5 },
-  bdog: { speed: 0.9, bob: 7, waddle: 3.5 },
+  duck: { speed: 0.7, bob: 0, waddle: 4 },
+  goat: { speed: 1, bob: 0, waddle: 1.5 },
+  pig: { speed: 0.95, bob: 0, waddle: 1 },
+  horse: { speed: 0.85, bob: 0, waddle: 1 },
+  cow: { speed: 1.15, bob: 0, waddle: 1 },
+  sdog: { speed: 0.8, bob: 0, waddle: 1.5 },
+  bdog: { speed: 0.9, bob: 0, waddle: 1.5 },
 };
 
 export interface DecorPlacement {
