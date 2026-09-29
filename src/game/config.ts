@@ -260,9 +260,10 @@ export const ZONES: Record<HerdKey, ZoneLayout> = {
  */
 export const SPRITE_SCALE: Record<HerdKey, number> = {
   duck: 1,
+  // Кінь має читатись утричі більшим за козу/вівцю (та лишається 1).
   goat: 1,
   pig: 1,
-  horse: 1,
+  horse: 3,
   cow: 1,
   sdog: 1.6,
   bdog: 2.4,
