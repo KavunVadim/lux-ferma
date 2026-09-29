@@ -1,3 +1,6 @@
+import { WALK_STYLE } from '../../game/config';
+import type { HerdKey } from '../../game/types';
+
 /**
  * Детермінована «випадковість» для анімацій спрайтів.
  *
@@ -7,7 +10,6 @@
  * хешем від стабільного ключа (вид тварини + її номер у загоні).
  */
 export type MotionKind = 'wander' | 'graze' | 'hop' | 'rest';
-
 export interface Motion {
   kind: MotionKind;
   /** CSS-змінні для кадрів анімації. */
@@ -36,13 +38,20 @@ export function motionFor(key: string, index: number): Motion {
   const second = noise(seed + 1);
   const third = noise(seed + 2);
   const fourth = noise(seed + 3);
+  const style = WALK_STYLE[key as HerdKey];
 
   return {
     kind,
     vars: {
       '--dur': `${(2.6 + second * 2.6).toFixed(2)}s`,
-      /** Темп кроку для спрайт-листа ходи — швидший за «погойдування». */
-      '--walk-dur': `${(0.85 + second * 0.7).toFixed(2)}s`,
+      /**
+       * Темп кроку для спрайт-листа ходи. Множиться на видовий коефіцієнт:
+       * качка дріботить швидко, корова переступає повільно.
+       */
+      '--walk-dur': `${((0.85 + second * 0.7) * (style?.speed ?? 1)).toFixed(2)}s`,
+      // Погойдування тіла й перевальцем — те, чого не малюють кадри.
+      '--bob': `${style?.bob ?? 3}%`,
+      '--waddle': `${style?.waddle ?? 2}deg`,
       // Негативна затримка — спрайт стартує посеред циклу, тому рухи не синхронні.
       '--delay': `-${(third * 4).toFixed(2)}s`,
       '--dx': `${(2 + fourth * 6).toFixed(1)}%`,

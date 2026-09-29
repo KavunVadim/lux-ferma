@@ -270,6 +270,30 @@ export const SPRITE_SCALE: Record<HerdKey, number> = {
   bdog: 2.4,
 };
 
+export interface WalkStyle {
+  /** Множник темпу кроку: менше = швидші ноги. */
+  speed: number;
+  /** Погойдування тіла вгору-вниз, % висоти спрайта. */
+  bob: number;
+  /** Перевальцем — нахил у градусах. Качка йде саме так. */
+  waddle: number;
+}
+
+/**
+ * Хода за видом. Кадри малюють ноги, але тіло в арті майже не рухається, тому
+ * дрібні тварини (качка) виглядали як «тупання на місці». Тут задаємо темп,
+ * погойдування й перевальцем — разом це читається як справжня хода.
+ */
+export const WALK_STYLE: Record<HerdKey, WalkStyle> = {
+  duck: { speed: 0.7, bob: 8, waddle: 7 },
+  goat: { speed: 1, bob: 6, waddle: 3 },
+  pig: { speed: 0.95, bob: 5.5, waddle: 2.5 },
+  horse: { speed: 0.85, bob: 7, waddle: 2 },
+  cow: { speed: 1.15, bob: 6, waddle: 2 },
+  sdog: { speed: 0.8, bob: 7, waddle: 3.5 },
+  bdog: { speed: 0.9, bob: 7, waddle: 3.5 },
+};
+
 export interface DecorPlacement {
   sprite: string;
   emoji: string;

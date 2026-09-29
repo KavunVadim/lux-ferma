@@ -168,13 +168,22 @@ export function BoardScene({
                     <span
                       key={`${key}-${index}`}
                       className={cn(styles.slot, fresh && styles.arrive, leaving && styles.leave)}
+                      style={motion.vars}
                     >
-                      <WalkToken
-                        species={key}
-                        emoji={meta.emoji}
-                        vars={motion.vars}
-                        className={cn(styles.token, styles[motion.kind])}
-                      />
+                      {/*
+                       * Окрема обгортка під погойдування тіла й «перевальцем»:
+                       * кадри малюють лише ноги, і без цього дрібна качка
+                       * виглядала як тупання на місці. Обгортка потрібна, щоб
+                       * не зіштовхнути transform із анімацією wander/hop/graze.
+                       */}
+                      <span className={styles.bob}>
+                        <WalkToken
+                          species={key}
+                          emoji={meta.emoji}
+                          vars={motion.vars}
+                          className={cn(styles.token, styles[motion.kind])}
+                        />
+                      </span>
                     </span>
                   );
                 })}

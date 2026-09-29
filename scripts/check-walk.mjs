@@ -137,6 +137,37 @@ const first = await evaluate(stripProbe);
 await sleep(260);
 const second = await evaluate(stripProbe);
 
+const bobProbe = `(() => {
+  const bob = document.querySelector('[class*="bob"]');
+  if (!bob) return { found: false };
+  const cs = getComputedStyle(bob);
+  const box = bob.getBoundingClientRect();
+  return {
+    found: true,
+    transform: cs.transform,
+    walkDur: cs.getPropertyValue('--walk-dur').trim(),
+    bobVar: cs.getPropertyValue('--bob').trim(),
+    waddleVar: cs.getPropertyValue('--waddle').trim(),
+    height: +box.height.toFixed(1),
+  };
+})()`;
+const bobA = await evaluate(bobProbe);
+await sleep(200);
+const bobB = await evaluate(bobProbe);
+const bobY = (m) => {
+  const match = /matrix\(([^)]+)\)/.exec(m ?? '');
+  if (!match) return 0;
+  return Number(match[1].split(',')[5]);
+};
+const duck = await evaluate(`(() => {
+  const ducks = [...document.querySelectorAll('[class*="tokens"]')].find((el) => /качки/.test(el.parentElement?.textContent ?? ''));
+  const bob = ducks?.querySelector('[class*="bob"]');
+  const cs = bob ? getComputedStyle(bob) : null;
+  return cs ? { walkDur: cs.getPropertyValue('--walk-dur').trim(), bobVar: cs.getPropertyValue('--bob').trim(), waddle: cs.getPropertyValue('--waddle').trim() } : null;
+})()`);
+console.log('погойдування:', JSON.stringify({ ...bobA, other: bobB.transform, shiftY: +(bobY(bobB.transform) - bobY(bobA.transform)).toFixed(2) }));
+console.log('качка:', JSON.stringify(duck));
+
 const cell = first.stripWidth / Number(first.frames || 1);
 const parseX = (m) => {
   if (!m || m === 'none') return 0;

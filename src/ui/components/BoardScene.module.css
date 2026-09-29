@@ -124,6 +124,32 @@
 }
 
 /*
+ * Погойдування тіла + «перевальцем». Кадри стрічки малюють тільки ноги, тому
+ * без цього крок читається погано (особливо в дрібної качки). Окремий елемент,
+ * бо transform уже зайнятий анімаціями wander/graze/hop і arrive/leave.
+ */
+.bob {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: walk-bob var(--walk-dur, 0.9s) ease-in-out var(--delay, 0s) infinite;
+}
+
+@keyframes walk-bob {
+  0%,
+  50%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(calc(-1 * var(--bob, 3%))) rotate(var(--waddle, 0deg));
+  }
+  75% {
+    transform: translateY(calc(-0.5 * var(--bob, 3%))) rotate(calc(-0.6 * var(--waddle, 0deg)));
+  }
+}
+
+/*
  * Пил з-під ніг: тварина, яка йде, лишає по собі куряву.
  * Живе на .slot (не на .walker), бо у walker стоїть overflow: hidden.
  */
@@ -237,15 +263,38 @@
   left: 8%;
   z-index: 9;
   pointer-events: none;
+  /* Хижак має бути видимим довше: 0.55с вбіг + пауза до 1.35с + 0.9с втеча. */
   animation:
-    raid-in 0.6s cubic-bezier(0.25, 0.9, 0.3, 1) both,
-    raid-out 0.85s ease-in 0.95s both;
+    raid-in 0.55s cubic-bezier(0.25, 0.9, 0.3, 1) both,
+    raid-out 0.9s ease-in 1.35s both;
 }
 
+/*
+ * Рамка хижака — квадратна й фіксована. Це критично: анімація набігу
+ * (`raid-in`/`raid-out`) зсуває елемент у ВІДСОТКАХ від його ж ширини
+ * (-520%). Коли рамку розтягувала стрічка кадрів (≈550px), лисиця й ведмідь
+ * відлітали далеко за екран і весь набіг лишалися невидимими.
+ */
 .raiderSprite {
-  height: clamp(46px, 4.8vw, 92px);
-  width: auto;
-  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.35));
+  width: clamp(54px, 5.4vw, 104px);
+  height: clamp(54px, 5.4vw, 104px);
+  overflow: hidden;
+  /*
+   * Вбігає лисиця зліва й дивиться вправо — так і має бути. Але тікає вона
+   * теж у лівий верхній кут (у ліс), тому в момент утечі розвертаємо спрайт:
+   * інакше вона «задкує» спиною до лісу. `steps(1)` — щоб перевертання було
+   * миттєвим, без проміжного огризка.
+   */
+  animation: raider-turn 0.01s steps(1) 1.35s both;
+}
+
+@keyframes raider-turn {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(-1);
+  }
 }
 
 /* ── Пес-охоронець ── */
