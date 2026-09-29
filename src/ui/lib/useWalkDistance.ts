@@ -28,7 +28,18 @@ export function useWalkDistance() {
 
       const sizes = slots.map((slot) => slot.getBoundingClientRect().width).filter((value) => value > 0);
       const biggest = sizes.length ? Math.max(...sizes) : 0;
-      const distance = Math.max(box.width * 0.12, box.width - biggest);
+
+      /*
+       * Найдовший безпечний крок: тварина, що стартує на лівому краю ділянки
+       * (`tokens`), має дійти максимум до краю намальованого загону (`zone`).
+       * Обмежуємо САМЕ правою межею, а не додаємо відступ — інакше крок стає
+       * більшим за ділянку (було 253px при ділянці 221px) і тварини гуляють
+       * усім загоном, вилазячи на тин.
+       */
+      const zone = tokens.closest('[class*="zone"]') as HTMLElement | null;
+      const zoneBox = zone?.getBoundingClientRect();
+      const limitRight = zoneBox ? zoneBox.right - biggest - box.left : box.width - biggest;
+      const distance = Math.max(box.width * 0.1, Math.min(box.width - biggest, limitRight));
       // Три доріжки на двір: тварина №0 — верхня, №1 — середня, №2 — нижня.
       const lane = Math.max(4, (box.height - biggest) / 3);
 
