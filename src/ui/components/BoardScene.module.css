@@ -96,6 +96,15 @@
   font-size: clamp(16px, 1.7vw, 34px);
 }
 
+/*
+ * Для видів зі збільшеним спрайтом (пси, SPRITE_SCALE > 1) рядки ростуть
+ * УГОРУ, всередину загону. Інакше другий пес перескакував на рядок нижче
+ * й опинявся за тином.
+ */
+.tokensGrowUp {
+  align-content: flex-end;
+}
+
 .slot {
   position: relative;
   display: inline-flex;
