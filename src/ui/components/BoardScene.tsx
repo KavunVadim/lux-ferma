@@ -130,7 +130,7 @@ export function BoardScene({
               )}
 
               <span
-                className={cn(styles.tokens, SPRITE_SCALE[key] > 1 && styles.tokensGrowUp)}
+                className={cn(styles.tokens, SPRITE_SCALE[key] > 1 && styles.tokensCentered)}
                 style={{
                   top: `${zone.tokens[0]}%`,
                   right: `${zone.tokens[1]}%`,

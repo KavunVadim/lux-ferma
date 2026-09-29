@@ -264,7 +264,8 @@ export const SPRITE_SCALE: Record<HerdKey, number> = {
   goat: 1,
   pig: 1,
   horse: 3,
-  cow: 1,
+  // Корова буває одна-дві за партію — тому вона найбільша на карті, більша за коня.
+  cow: 3.8,
   sdog: 1.6,
   bdog: 2.4,
 };
