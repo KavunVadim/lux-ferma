@@ -19,6 +19,7 @@ import {
   tradesLeft,
 } from '../game/engine';
 import { sound } from '../game/sound';
+import { PREDATORS } from '../game/config';
 import { clearSave, hasSavedGame, loadGame, saveGame } from '../game/storage';
 import { DEFAULT_SETTINGS, applyRuntime, loadSettings, rulesOf, sanitizeSettings, saveSettings } from '../game/settings';
 import type { AppSettings } from '../game/settings';
@@ -83,6 +84,8 @@ export interface GameApi {
   endTurn: () => void;
   trade: (option: TradeOption) => void;
   dismissResult: () => void;
+  /** Показати набіг хижака на замовлення (перевірка анімації, стан не змінюється). */
+  previewRaid: (kind: 'fox' | 'bear') => void;
   closeHandoff: () => void;
   toggleSound: () => void;
   /** Змінює налаштування; правила одразу застосовуються й до поточної партії. */
@@ -321,6 +324,44 @@ export function useGame(): GameApi {
 
   const trades = useMemo(() => (state ? availableTrades(state) : []), [state]);
 
+  /**
+   * Показати набіг хижака на замовлення — для перевірки анімації.
+   *
+   * У справжній партії лисиця випадає приблизно раз на шість ходів і лише
+   * якщо є кого красти, тому побачити її можна не завжди. Ця дія малює той
+   * самий набір подій на полі, але НЕ чіпає стан партії: жодна тварина не
+   * зникає, лічильники не змінюються.
+   */
+  const previewRaid = useCallback(
+    (kind: 'fox' | 'bear') => {
+      const meta = PREDATORS[kind];
+      const subject = meta.steals[0];
+      if (!subject) return;
+      setDeltas({ [subject]: -1 });
+      setEvents([
+        {
+          kind: 'loss',
+          emoji: meta.emoji,
+          subject,
+          raider: kind,
+          delta: -1,
+          farmAfter: stateRef.current?.players[stateRef.current.current].farm[subject] ?? 0,
+          herdAfter: stateRef.current?.herd[subject] ?? 0,
+          text: `Перевірка анімації: ${meta.label.toLowerCase()} ${meta.raidVerb}`,
+          detail: 'Це показ — у партії нічого не змінилось.',
+        },
+      ]);
+      setDeltaKey((value) => value + 1);
+      sound.play('raid');
+      haptic('heavy');
+      later(DELTA_LIFETIME, () => {
+        setEvents([]);
+        setDeltas({});
+      });
+    },
+    [later],
+  );
+
   return {
     screen,
     state,
@@ -346,6 +387,7 @@ export function useGame(): GameApi {
     endTurn,
     trade,
     dismissResult,
+    previewRaid,
     closeHandoff: () => setHandoff(null),
     toggleSound: () => updateSettings({ sound: !settings.sound }),
     updateSettings,

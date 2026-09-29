@@ -14,6 +14,8 @@ interface SettingsSheetProps {
   inGame: boolean;
   onChange: (patch: Partial<AppSettings>) => void;
   onReset: () => void;
+  /** Показати набіг хижака на полі (перевірка анімації). */
+  onPreviewRaid: (kind: 'fox' | 'bear') => void;
   onClose: () => void;
 }
 
@@ -75,7 +77,14 @@ function OptionRow<T extends string | number | boolean | null>({
  * Правила застосовуються одразу (навіть посеред партії); стартове стадо —
  * тільки для нових партій, бо воно роздається на старті.
  */
-export function SettingsSheet({ settings, inGame, onChange, onReset, onClose }: SettingsSheetProps) {
+export function SettingsSheet({
+  settings,
+  inGame,
+  onChange,
+  onReset,
+  onPreviewRaid,
+  onClose,
+}: SettingsSheetProps) {
   return (
     <Overlay variant="sheet" onClose={onClose} label="Налаштування">
       <div className="sheet">
@@ -249,6 +258,43 @@ export function SettingsSheet({ settings, inGame, onChange, onReset, onClose }: 
           value={settings.diceFlicker}
           onSelect={(value) => onChange({ diceFlicker: value })}
         />
+
+        {inGame && (
+          <section className={styles.settingGroup}>
+            <header>
+              <b>🎬 Перевірити анімації</b>
+            </header>
+            <p className={styles.settingHint}>
+              У партії лисиця випадає приблизно раз на шість ходів і лише коли є кого красти, тому
+              побачити її можна не завжди. Тут можна викликати набіг на замовлення — на полі, без
+              впливу на партію: нічого не губиться, лічильники не змінюються.
+            </p>
+            <div className={styles.previewRow}>
+              <button
+                type="button"
+                className={styles.soundTest}
+                onClick={() => {
+                  onPreviewRaid('fox');
+                  onClose();
+                }}
+              >
+                🦊 Показати набіг лисиці
+                <span>краде качку або козу, тікає в ліс</span>
+              </button>
+              <button
+                type="button"
+                className={styles.soundTest}
+                onClick={() => {
+                  onPreviewRaid('bear');
+                  onClose();
+                }}
+              >
+                🐻 Показати набіг ведмедя
+                <span>краде свиню або коня</span>
+              </button>
+            </div>
+          </section>
+        )}
 
         <div className={styles.settingsFooter}>
           <Button variant="ghost" small onClick={onReset}>

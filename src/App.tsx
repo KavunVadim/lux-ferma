@@ -85,6 +85,7 @@ export function App() {
           inGame={screen === 'game'}
           onChange={game.updateSettings}
           onReset={game.resetSettings}
+          onPreviewRaid={game.previewRaid}
           onClose={() => setSettingsOpen(false)}
         />
       )}
