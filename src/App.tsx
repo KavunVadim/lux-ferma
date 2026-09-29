@@ -38,6 +38,19 @@ export function App() {
     };
   }, [screen, toStart]);
 
+  /*
+   * Редактор карти (`?editor=1`) відкривається одним посиланням: у dev-режимі
+   * одразу створюємо партію, щоб не доводилось вручну натискати «Почати гру»
+   * й шукати, де подівся редактор. У продакшн-збірку цей блок не потрапляє —
+   * умова вирізається разом із динамічним імпортом.
+   */
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    if (!new URLSearchParams(window.location.search).has('editor')) return;
+    const { start, state, screen: current } = game;
+    if (current === 'start' && !state) start(['Гравець 1', 'Гравець 2']);
+  }, [game]);
+
   const inGame = screen === 'game' && game.state !== null;
 
   return (

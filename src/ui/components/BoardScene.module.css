@@ -602,22 +602,30 @@
   animation: walk-strip var(--walk-dur) steps(var(--frames)) var(--delay) infinite;
 }
 
+/*
+ * УВАГА: відсотки в `transform` рахуються від ширини САМОЇ стрічки, а не комірки.
+ * Стрічка = `--frames` комірок, тому -100% і крок `steps(--frames)` дають рівно
+ * одну комірку за крок. Якщо написати -N×100% (як робили для `left`, де відсотки
+ * йдуть від контейнера) — стрічка відлітає за межі й тварина «мерегкотить».
+ */
 @keyframes walk-strip {
   from {
     transform: translate3d(0, 0, 0);
   }
   to {
-    transform: translate3d(calc(-1 * var(--frames) * 100%), 0, 0);
+    transform: translate3d(-100%, 0, 0);
   }
 }
 
+/*
+ * `will-change` свідомо НЕ вішаємо на десятки токенів: кожен стає окремим
+ * шаром GPU, а на слабких машинах шари витісняються і спрайти блимають.
+ */
 .wander,
 .graze,
 .hop,
-.raider,
-.walker {
-  will-change: transform;
-  backface-visibility: hidden;
+.raider {
+  animation-fill-mode: both;
 }
 
 /*
