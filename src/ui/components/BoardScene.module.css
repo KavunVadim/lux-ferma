@@ -473,20 +473,33 @@
  * `translate3d` повертається в 0, тому без цього стрибка тварина «проїжджала»
  * пів двору задом наперед.
  */
+/*
+ * Хода «туди-сюди»: тварина проходить свою смугу двору, розвертається й
+ * вертається — і так по колу. `--lane-px` зсуває смугу по вертикалі, тому
+ * тварини одного двору йдуть різними доріжками й не накладаються одна на одну.
+ *
+ * КЛЮЧОВЕ: розворот мусить відбуватися в ТІЙ САМІЙ точці. Якщо на 50% циклу
+ * раптом поставити 0 (як було раніше), тварина замість розвороту «телепортується»
+ * через пів двору — замір показував стрибок 120 px за один кадр (1000 px/с).
+ * Тому обидві половини циклу проходять той самий шлях: 0 → dx → 0, а змінюється
+ * лише бік спрайта, і перемикання відбувається у точці, де швидкість дорівнює
+ * нулю (на самому краї двору).
+ */
 @keyframes up-wander {
   0% {
     transform: translate3d(0, calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(var(--flip)) rotate(0deg);
   }
-  46% {
-    transform: translate3d(var(--dx), calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(var(--flip)) rotate(0deg);
+  49% {
+    transform: translate3d(var(--dx), calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(var(--flip))
+      rotate(0deg);
   }
   50% {
-    transform: translate3d(0, calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0)
-      scaleX(calc(-1 * var(--flip))) rotate(0deg);
-  }
-  96% {
     transform: translate3d(var(--dx), calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0)
       scaleX(calc(-1 * var(--flip))) rotate(0deg);
+  }
+  99% {
+    transform: translate3d(0, calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(calc(-1 * var(--flip)))
+      rotate(0deg);
   }
   100% {
     transform: translate3d(0, calc(var(--lane-step, 0) * var(--lane-px, 0px)), 0) scaleX(var(--flip)) rotate(0deg);
