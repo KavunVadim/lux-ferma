@@ -1,5 +1,6 @@
 import { ANIMAL_SPRITES } from '../../assets/manifest';
 import { ANIMALS, DOGS, PEN_TOKEN_CAP, SPECIES } from '../../game/config';
+import type { Species } from '../../game/types';
 import type { Farm, Herd, HerdKey } from '../../game/types';
 import { cn } from '../../lib/cn';
 import { Sprite } from './Sprite';
@@ -21,6 +22,13 @@ interface FarmPanelProps {
 function speciesDone(farm: Farm): number {
   return SPECIES.filter((key) => farm[key] >= 1).length;
 }
+
+/**
+ * Корова замикає драбину обміну, тому йде не в сітку, а окремим рядком.
+ * Беремо останній вид зі SPECIES, а не константу: порядок у SPECIES — це і є
+ * порядок драбини, тож за зміни балансу цей код не доведеться чіпати.
+ */
+const COW: Species = SPECIES[SPECIES.length - 1]!;
 
 /** Коротка суть двору — пояснення ролі, видно лише на ПК (там є ширина). */
 const PEN_ROLE: Record<HerdKey, string> = {
@@ -93,20 +101,24 @@ function Pen({ species, farm, herd, deltas, deltaKey }: PenProps) {
 /**
  * «Моя ферма».
  *
- * Дві окремі зони замість однієї сітки з семи плиток:
- *  1) п'ять ВИДІВ для перемоги — головне, сітка в дві колонки;
- *  2) два СОБАКИ — захист, а не вид: вони не входять у набір перемоги, тож
- *     стоять окремим блоком нижче, паралельно, з підписом «Охорона двору».
+ * Три зони замість однієї сітки з семи плиток:
+ *  1) чотири МОЛОДШІ види — сітка в дві колонки;
+ *  2) КОРОВА — окремо по центру: вона старша у драбині обміну й найцінніша
+ *     (остання ланка до перемоги), тож не має губитись серед решти, як
+ *     звичайний рядок сітки;
+ *  3) два СОБАКИ — захист, а не вид: вони не входять у набір перемоги.
  *
- * Раніше всі сім плиток лежали в одній сітці, і собаки виглядали як «шостий
- * і сьомий вид» — це збивало з пантелику, бо мета гри саме п'ять видів.
+ * Раніше всі сім плиток лежали в одній сітці, і ні корова, ні собаки не
+ * вирізнялись — собаки ще й виглядали як «шостий і сьомий вид».
  *
  * Плитка на телефоні: іконка ліворуч; праворуч назва, під нею «×N 🧺M».
  * Лічильник має стояти під назвою, а не бічним бейджем: у колонці ~165px
- * бічний бейдж забирав половину ширини, і «Свинарник» різався в «С…».
+ * бічний бейдж забирав половину ширини, і назва різалась.
  */
 export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassName }: FarmPanelProps) {
   const done = speciesDone(farm);
+  // Корова окремо: вона замикає драбину, тож має власний рядок по центру.
+  const young = SPECIES.filter((species) => species !== COW);
 
   return (
     <section className={cn('card', styles.panel, className)} aria-label="Моя ферма">
@@ -128,9 +140,9 @@ export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassNa
         <i className={styles.progressFill} style={{ width: `${(done / SPECIES.length) * 100}%` }} />
       </div>
 
-      {/* 1. Види, потрібні для перемоги. */}
+      {/* 1. Молодші види. */}
       <div className={cn(styles.pens, bodyClassName)}>
-        {SPECIES.map((species) => (
+        {young.map((species) => (
           <Pen
             key={species}
             species={species}
@@ -142,7 +154,12 @@ export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassNa
         ))}
       </div>
 
-      {/* 2. Охорона — окремо: собаки не дають перемоги, вони захищають двір. */}
+      {/* 2. Корова — по центру, окремим рядком: найцінніша тварина ферми. */}
+      <div className={styles.cowRow}>
+        <Pen species={COW} farm={farm} herd={herd} deltas={deltas} deltaKey={deltaKey} />
+      </div>
+
+      {/* 3. Охорона — окремо: собаки не дають перемоги, вони захищають двір. */}
       <div className={styles.guard}>
         <span className={styles.guardLabel}>🛡 Охорона двору</span>
         <div className={styles.guardRow}>

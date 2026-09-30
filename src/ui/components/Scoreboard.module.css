@@ -48,7 +48,26 @@
   white-space: nowrap;
 }
 
+/*
+ * Цифри рахунку «4/5» — на пілюлі гравця, а не на картці, тож їм потрібен
+ * варіант кольору під конкретне тло пілюлі. Базові PLAYER_COLORS — це
+ * «впізнавані плями» для рамок і заливок; як текст вони давали 4.06–4.19
+ * при нормі WCAG 4.5 (дрібний шрифт 13px).
+ *
+ * Схема: темна тема — освітлений варіант, світла — затемнений. Це два
+ * окремі правила, а не color-mix, бо браузер не знає, який бік тягнути.
+ */
 .score {
   font-family: var(--font-display);
-  color: var(--player-color);
+  color: var(--player-color-dark, var(--player-color));
+}
+
+@media (prefers-color-scheme: light) {
+  .score {
+    color: var(--player-color-light, var(--player-color));
+  }
+}
+
+[data-theme='light'] .score {
+  color: var(--player-color-light, var(--player-color));
 }

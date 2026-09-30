@@ -31,14 +31,11 @@ export interface AnimalMeta {
 }
 
 export const ANIMALS: Record<HerdKey, AnimalMeta> = {
-  duck: { key: 'duck', emoji: '🦆', label: 'Качка', plural: 'качки', house: 'Качник', sprite: 'assets/animals/duck.webp' },
-  goat: { key: 'goat', emoji: '🐐', label: 'Коза', plural: 'кози', house: 'Козар', sprite: 'assets/animals/goat.webp' },
-  pig: { key: 'pig', emoji: '🐖', label: 'Свиня', plural: 'свині', house: 'Свинарник', sprite: 'assets/animals/pig.webp' },
-  horse: { key: 'horse', emoji: '🐎', label: 'Кінь', plural: 'коні', house: 'Стайня', sprite: 'assets/animals/horse.webp' },
-  cow: { key: 'cow', emoji: '🐄', label: 'Корова', plural: 'корови', house: 'Коровник', sprite: 'assets/animals/cow.webp' },
-  // «Мала будка» / «Велика будка» не влазили в плитку 165px поруч із
-  // лічильником — назва різалась у «Велика буд···». «Пес» і «Вовкодав»
-  // коротші, але одразу кажуть, хто це і хто з них сильніший.
+  duck: { key: 'duck', emoji: '🦆', label: 'Качка', plural: 'качки', house: 'Качки', sprite: 'assets/animals/duck.webp' },
+  goat: { key: 'goat', emoji: '🐐', label: 'Коза', plural: 'кози', house: 'Кози', sprite: 'assets/animals/goat.webp' },
+  pig: { key: 'pig', emoji: '🐖', label: 'Свиня', plural: 'свині', house: 'Свині', sprite: 'assets/animals/pig.webp' },
+  horse: { key: 'horse', emoji: '🐎', label: 'Кінь', plural: 'коні', house: 'Коні', sprite: 'assets/animals/horse.webp' },
+  cow: { key: 'cow', emoji: '🐄', label: 'Корова', plural: 'корови', house: 'Корови', sprite: 'assets/animals/cow.webp' },
   sdog: { key: 'sdog', emoji: '🐕', label: 'Малий пес', plural: 'песи', house: 'Пес', sprite: 'assets/animals/sdog.webp' },
   bdog: { key: 'bdog', emoji: '🐕‍🦺', label: 'Великий пес', plural: 'песи', house: 'Вовкодав', sprite: 'assets/animals/bdog.webp' },
 };
@@ -218,7 +215,27 @@ export const BALANCE: Record<BalancePreset, Herd> = {
 
 export const DEFAULT_BALANCE: BalancePreset = 'classic';
 
+/*
+ * Кольори гравців — у двох варіантах на кожну тему.
+ *
+ * PLAYER_COLORS — «впізнавана пляма»: рамка пілюлі, крапка, заливка. Тут
+ * важлива насиченість, а не читабельність тексту.
+ *
+ * PLAYER_COLORS_TEXT — той самий відтінок, але з яскравістю, підібраною під
+ * КОНКРЕТНЕ тло, бо цифри рахунку «4/5» стоять на пілюлі, а не на картці:
+ *  · у темній темі пілюля майже чорна (#201a12), тож колір ОСВІТЛЮЄМО;
+ *  · у світлій пілюля майже біла (#fffdf8), тож ЗАТЕМНЮЄМО.
+ * Без цього базові кольори давали 4.06–4.19 при нормі WCAG 4.5.
+ */
 export const PLAYER_COLORS = ['#d9483b', '#2f7fc1', '#3f9d4e', '#a35fc4'] as const;
+
+/** Ті самі кольори для тексту: [освітлений для темної, затемнений для світлої]. */
+export const PLAYER_COLORS_TEXT: Record<string, [string, string]> = {
+  '#d9483b': ['#dc5a4e', '#b13b30'],
+  '#2f7fc1': ['#438bc7', '#26689e'],
+  '#3f9d4e': ['#52a65f', '#33803f'],
+  '#a35fc4': ['#ac6fc9', '#854da0'],
+};
 export const PLAYER_AVATARS = ['🧑‍🌾', '👩‍🌾', '👨‍🌾', '👩‍🦰'] as const;
 
 export const MIN_PLAYERS = 2;
