@@ -138,21 +138,27 @@ function EventCard({ event, index }: EventCardProps) {
 
       {hasMath && counted && <PairMath counted={counted} kind={event.kind} />}
 
-      {(event.kind !== 'note' && event.farmAfter !== undefined) || event.herdAfter !== undefined || event.detail ? (
+      {/*
+       * «У дворі N 🧺 стадо M» — стани після ходу.
+       *
+       * `event.detail` тут НЕ показуємо: для подій із `counted` він повторює
+       * той самий розрахунок, який уже стоїть у PairMath («У дворі 1 + 2 з
+       * кубиків = 3 → 1 пар(и)»), і картка виростала вдвічі. Detail лишаємо
+       * тільки там, де розрахунку немає — тоді він єдине пояснення.
+       */}
+      {event.kind !== 'note' && event.farmAfter !== undefined && (
         <div className={styles.cardMeta}>
-          {event.kind !== 'note' && event.farmAfter !== undefined && (
-            <span className={styles.metaChip}>
-              у дворі <b>{event.farmAfter}</b>
-            </span>
-          )}
+          <span className={styles.metaChip}>
+            у дворі <b>{event.farmAfter}</b>
+          </span>
           {event.herdAfter !== undefined && (
             <span className={styles.metaChip}>
               🧺 стадо <b>{event.herdAfter}</b>
             </span>
           )}
-          {event.detail && <span className={styles.cardDetailInline}>{event.detail}</span>}
+          {!hasMath && event.detail && <span className={styles.cardDetailInline}>{event.detail}</span>}
         </div>
-      ) : null}
+      )}
     </li>
   );
 }

@@ -65,8 +65,8 @@
 .math {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 0 12px 10px 46px;
+  gap: 4px;
+  padding: 0 10px 7px 38px;
 }
 
 .mathLine {
@@ -124,7 +124,11 @@
   flex-direction: column;
   width: 100%;
   max-width: 420px;
-  max-height: 90dvh;
+  /* 84dvh + щільні відступи нижче: результат ходу має вміщатись ЦІЛКОМ.
+     За 90dvh картка з розрахунком вилазила за екран, і .body давав
+     внутрішню прокрутку — гравцеві доводилось гортати, щоб побачити
+     «у дворі» і «стадо». */
+  max-height: 84dvh;
   overflow: hidden;
   border: 3px solid var(--wood);
   border-radius: var(--radius-lg);
@@ -159,7 +163,7 @@
 }
 
 .head {
-  padding: 12px 16px;
+  padding: 8px 14px;
   color: #fff;
   text-align: center;
   background: var(--sky);
@@ -175,14 +179,16 @@
 
 .title {
   font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-size: 1.12rem;
   font-weight: 800;
 }
 
 .body {
   display: grid;
-  gap: 8px;
-  padding: 12px 14px 6px;
+  /* 6px між блоками: заголовок події, картки, підсумки — усе це має
+     вміщатись на 390x844 без прокрутки. */
+  gap: 6px;
+  padding: 9px 11px 4px;
   overflow-y: auto;
 }
 
@@ -232,7 +238,7 @@
 
 .cards {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -240,7 +246,7 @@
 
 .card {
   border: 2px solid var(--line);
-  border-radius: 16px;
+  border-radius: 12px;
   background: var(--cream-2);
   overflow: hidden;
   animation: card-in 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) both;
@@ -274,26 +280,26 @@
 .cardHead {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  padding: 9px 11px;
+  padding: 6px 9px;
 }
 
 .cardIcon {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 38px;
+  height: 38px;
   flex: none;
-  border-radius: 12px;
+  border-radius: 10px;
   background: color-mix(in srgb, var(--card) 82%, transparent);
   box-shadow: inset 0 0 0 2px var(--line);
 }
 
 .cardSprite {
-  width: 40px;
-  height: 40px;
-  font-size: 1.5rem;
+  width: 33px;
+  height: 33px;
+  font-size: 1.3rem;
   object-fit: contain;
 }
 
@@ -629,17 +635,24 @@
 }
 
 .tradeGroup {
-  margin-bottom: 12px;
+  margin-bottom: 7px;
 }
 
 /*
- * Обмін двома колонками: «Вгору» ліворуч, «Вниз» праворуч — напрямок видно
- * одним поглядом, картки стоять одна біля одної. На вузькому екрані — стовпчик.
+ * Обмін двома колонками: «Вгору» ліворуч, «Вниз» праворуч.
+ *
+ * Колонки лишаються двома І НА ТЕЛЕФОНІ. Раніше тут стояв
+ * `@media (max-width: 720px)` → один трек, і на телефоні «Вгору» та «Вниз»
+ * ставали одним довгим списком: напрямок губився, а панель виростала до
+ * ~1100px при екрані 844px — третина списку була за екраном.
+ *
+ * Напрямок тепер читається двома каналами: позиція колонки (ліва/права) і
+ * вертикальна схема в картці (віддаєш ↓ отримуєш).
  */
 .tradeColumns {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
   align-items: start;
 }
 
@@ -647,20 +660,100 @@
   min-width: 0;
 }
 
+/*
+ * Собаки — тією ж сіткою у два стовпці, що й «Вгору»/«Вниз».
+ * Раніше .tradeList тут мав `auto-fill minmax(210px, 1fr)`, і на 390px
+ * виходила ОДНА колонка: картки розтягувались на всю ширину й виглядали
+ * як величезні порожні плитки з крихітним вмістом.
+ */
 .tradeDogs {
-  margin-top: 2px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
-@media (max-width: 720px) {
-  .tradeColumns {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
+.tradeDogs .tradeList {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
 }
 
-/* Картки в колонці — в один стовпчик, щоб не тіснились. */
+/*
+ * Числа праворуч у картці: «8 →2 | 24 →23».
+ *
+ * Перше число кожної пари — скільки Є ЗАРАЗ (велике, темне), друге — скільки
+ * стане після обміну (дрібне, тьмяне). Ліва пара — двір (віддаємо), права —
+ * стадо (отримуємо).
+ */
+/*
+ * СКІЛЬКИ Є ЗАРАЗ — головне, що шукає око в цій панелі.
+ *
+ * Числа стоять у золотих чипах (--hay), як лічильники ×N у дворах на
+ * головному екрані: та сама мова, і гравець одразу впізнає «це моя
+ * кількість». Просте темне число на темній картці губилось серед іконок
+ * і стрілок — саме тому «не чітко видно з точки фокусу».
+ *
+ * Перед числом стоїть іконка джерела: 🏠 двір (скільки віддаю) і 🧺 стадо
+ * (скільки маю в запасі). Без неї два числа поруч читались як одне.
+ */
+.have {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  padding-top: 3px;
+  border-top: 1px dashed color-mix(in srgb, var(--ink) 13%, transparent);
+}
+
+/* Клітинка «іконка + число»: 🏠 скільки у дворі, 🧺 скільки в стаді. */
+.haveCell {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.haveNow {
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--hay);
+  color: #5a4014;
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1.4;
+  box-shadow: 0 1px 0 color-mix(in srgb, #5a4014 35%, transparent);
+}
+
+/* Джерело числа: 🏠 скільки у дворі, 🧺 скільки в стаді. */
+.haveIcon {
+  color: var(--ink-soft);
+  font-size: 0.66rem;
+  line-height: 1;
+}
+
+.haveSep {
+  width: 1px;
+  height: 12px;
+  margin: 0;
+  background: color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+/* Старе оформлення рядка «у дворі … · у стаді …» лишається для ПК:
+   там ширина дозволяє тримати все в одному рядку. */
+.optionCounts {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+/* Картки в колонці — в один стовпчик і з малим зазором, щоб панель була
+   щільною: раніше 3 картки + заголовок не вміщались у 844px. */
 .tradeColumn .tradeList {
   grid-template-columns: 1fr;
+  gap: 5px;
+  align-content: start;
 }
 
 .groupHeadUp {
@@ -679,29 +772,40 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 8px;
-  margin-bottom: 6px;
-  font-size: 0.95rem;
+  gap: 5px;
+  margin-bottom: 4px;
+  /* 0.82rem: підказку прибрано, лишився сам напрямок — він і має читатись. */
+  font-size: 0.82rem;
 }
 
 .groupHint {
   color: var(--ink-soft);
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   font-weight: 700;
 }
+
+/* Підказку напрямку прибрано з заголовків: її роль виконують стрілки ↓ і
+   позиція колонки. Лишаємо клас, бо він використовується на ПК. */
 
 .tradeList {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 8px;
+  gap: 5px;
 }
 
 .tradeOption {
-  display: grid;
-  gap: 4px;
-  padding: 10px 12px;
-  border: 3px solid var(--wood);
-  border-radius: 14px;
+  display: flex;
+  /* Один рядок: числа переїхали бейджами на іконки тварин, тож картка знову
+     компактна. 52px — під палець: менші тап-цілі на телефоні промахуються,
+     а картка виконує дію одразу при натисканні. */
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  /* 56px — під більшу іконку (30px) і палець: картка виконує дію одразу. */
+  min-height: 56px;
+  padding: 6px 8px;
+  border: 2px solid var(--wood);
+  border-radius: 11px;
   background: var(--card);
   color: var(--ink);
   font-family: var(--font-body);
@@ -725,39 +829,121 @@
   transform: translateY(1px);
 }
 
+/*
+ * Схема обміну: «віддаю ↓ отримую» — компактною парою в рядок.
+ *
+ * Було три поверхи (схема вертикально, числа великими, «→ N») — картка
+ * виростала до ~115px, і панель не вміщалась. Тепер дія зліва, числа справа,
+ * усе в один рядок: ~46px на картку.
+ */
 .optionRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 4px;
 }
 
+/* «Віддаєш» — тьмяніше, «отримуєш» — акцент: видно, що відбувається. */
 .side {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 0.84rem;
   font-weight: 800;
+  line-height: 1.1;
+}
+
+.sideOut {
+  color: color-mix(in srgb, var(--ink) 72%, var(--cream));
+}
+
+.sideIn {
+  color: var(--leaf-dark);
 }
 
 .tradeToken {
-  width: 34px;
-  height: 34px;
-  font-size: 1.3rem;
+  /* 30px: тварину треба впізнавати з першого погляду — це головний образ
+     картки. Числа вже компактні (жовте в куточку, синє чипом), тож місце є:
+     за 28px «+1» вилазило за край лише коли поруч стояв ще один чип. */
+  width: 30px;
+  height: 30px;
+  font-size: 1.2rem;
   object-fit: contain;
 }
 
+/*
+ * ДВА ЧИСЛА — ДВІ РІЗНІ ПОДАЧІ.
+ *
+ *  · .countYard (жовте) — АБСОЛЮТОМ у куточку іконки тварини, яку віддаєш:
+ *    скільки цих тварин У ДВОРІ. Куточок читається як бейдж на «своїй»
+ *    тварині: побачив качку з «8» — маєш вісім качок.
+ *
+ *  · .countHerd (синє з 🧺) — у ПОТОЦІ рядка, поруч з іконкою, яку
+ *    отримуєш: скільки цих тварин У СТАДІ. На іконку його не вішаємо, бо
+ *    стадо — не властивість конкретної тварини, а спільний запас гравця.
+ */
+.tokenCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  flex: none;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.45;
+  text-align: center;
+}
+
+/* Іконка + жовте число в куточку: обгортка тримає прив'язку. */
+.tokenWrap {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.countYard {
+  position: absolute;
+  right: -7px;
+  bottom: -6px;
+  border: 1.5px solid var(--card);
+  background: var(--hay);
+  color: #5a4014;
+  line-height: 1.4;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.countHerd {
+  background: var(--sky);
+  color: #0c2b45;
+  padding: 0 5px 0 3px;
+}
+
+/* Скільки віддаємо / отримуємо: −N і +N. */
+.qtyOut,
+.qtyIn {
+  font-family: var(--font-display);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
 .tradeArrow {
-  color: var(--leaf);
-  font-size: 1.1rem;
+  color: var(--gold-dark);
+  font-size: 0.78rem;
+  line-height: 1;
 }
 
 .optionCounts {
   display: block;
   color: var(--ink-soft);
-  font-size: 0.72rem;
+  /* 0.64rem: рядок «у дворі 8 → 2 · у стаді 24 → 23» — найдовший у картці,
+     він і визначає, чи влізе картка у половину екрана (390px → ~180px). */
+  font-size: 0.64rem;
   font-weight: 700;
+  line-height: 1.25;
 }
 
 .dotSep {

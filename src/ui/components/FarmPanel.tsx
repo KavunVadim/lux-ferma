@@ -1,5 +1,5 @@
 import { ANIMAL_SPRITES } from '../../assets/manifest';
-import { ANIMALS, HERD_KEYS, PEN_TOKEN_CAP, SPECIES } from '../../game/config';
+import { ANIMALS, DOGS, PEN_TOKEN_CAP, SPECIES } from '../../game/config';
 import type { Farm, Herd, HerdKey } from '../../game/types';
 import { cn } from '../../lib/cn';
 import { Sprite } from './Sprite';
@@ -33,18 +33,77 @@ const PEN_ROLE: Record<HerdKey, string> = {
   bdog: 'захищає від ведмедя',
 };
 
+interface PenProps {
+  species: HerdKey;
+  farm: Farm;
+  herd: Herd;
+  deltas: Partial<Record<HerdKey, number>>;
+  deltaKey: number;
+}
+
+/** Одна плитка двору. Виділена окремо, бо малюється у двох сітках. */
+function Pen({ species, farm, herd, deltas, deltaKey }: PenProps) {
+  const meta = ANIMALS[species];
+  const count = farm[species];
+  const delta = deltas[species] ?? 0;
+  const shown = Math.min(count, PEN_TOKEN_CAP);
+  const isDog = species === 'sdog' || species === 'bdog';
+  const empty = count === 0;
+
+  return (
+    <article
+      key={`${species}-${deltaKey}`}
+      className={cn(styles.pen, !empty && styles.filled, delta > 0 && styles.gain, delta < 0 && styles.loss)}
+    >
+      <span className={cn(styles.signIconWrap, empty && styles.signIconIdle)}>
+        <Sprite src={ANIMAL_SPRITES[species]} emoji={meta.emoji} className={styles.signIcon} />
+      </span>
+
+      <span className={styles.info}>
+        <b className={styles.house}>{meta.house}</b>
+        <span className={styles.role}>
+          {empty ? 'порожньо' : `${count} у дворі`}
+          <span className={styles.roleLong}> · {PEN_ROLE[species]}</span>
+        </span>
+        <span className={styles.meta}>
+          <b className={cn(styles.count, !empty && !isDog && styles.countDone)}>×{count}</b>
+          <span className={styles.herd}>🧺{herd[species]}</span>
+        </span>
+      </span>
+
+      {/* Спрайт-«розсип» у дворі — лише на ПК, де під це є місце. */}
+      <span className={styles.yard} aria-hidden>
+        {!empty &&
+          Array.from({ length: shown }, (_, index) => (
+            <Sprite key={index} src={ANIMAL_SPRITES[species]} emoji={meta.emoji} className={styles.token} />
+          ))}
+        {count > shown && <span className={styles.more}>+{count - shown}</span>}
+      </span>
+
+      {delta !== 0 && (
+        <span className={cn(styles.delta, delta > 0 ? styles.plus : styles.minus)}>
+          {delta > 0 ? '+' : ''}
+          {delta}
+        </span>
+      )}
+    </article>
+  );
+}
+
 /**
- * «Моя ферма»: сім дворів.
+ * «Моя ферма».
  *
- * Компоновка плитки на телефоні: іконка ліворуч, праворуч — назва, під нею
- * одним рядком «×N 🧺M». Лічильник стоїть У ПОТОЦІ колонки під назвою.
+ * Дві окремі зони замість однієї сітки з семи плиток:
+ *  1) п'ять ВИДІВ для перемоги — головне, сітка в дві колонки;
+ *  2) два СОБАКИ — захист, а не вид: вони не входять у набір перемоги, тож
+ *     стоять окремим блоком нижче, паралельно, з підписом «Охорона двору».
  *
- * Чому саме так: у колонці ~165px бічний бейдж лічильника забирав близько
- * половини ширини, і «Коровник» різався в «К…» — ні зменшення шрифту, ні
- * padding це не лікували, бо ширини просто не лишалось. Під назвою ж
- * лічильник має всю ширину плитки.
+ * Раніше всі сім плиток лежали в одній сітці, і собаки виглядали як «шостий
+ * і сьомий вид» — це збивало з пантелику, бо мета гри саме п'ять видів.
  *
- * ПК — картки зі спрайтами тварин у дворі й повним поясненням ролі.
+ * Плитка на телефоні: іконка ліворуч; праворуч назва, під нею «×N 🧺M».
+ * Лічильник має стояти під назвою, а не бічним бейджем: у колонці ~165px
+ * бічний бейдж забирав половину ширини, і «Свинарник» різався в «С…».
  */
 export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassName }: FarmPanelProps) {
   const done = speciesDone(farm);
@@ -69,64 +128,35 @@ export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassNa
         <i className={styles.progressFill} style={{ width: `${(done / SPECIES.length) * 100}%` }} />
       </div>
 
+      {/* 1. Види, потрібні для перемоги. */}
       <div className={cn(styles.pens, bodyClassName)}>
-        {HERD_KEYS.map((key) => {
-          const meta = ANIMALS[key];
-          const count = farm[key];
-          const delta = deltas[key] ?? 0;
-          const shown = Math.min(count, PEN_TOKEN_CAP);
-          const isDog = key === 'sdog' || key === 'bdog';
-          const empty = count === 0;
+        {SPECIES.map((species) => (
+          <Pen
+            key={species}
+            species={species}
+            farm={farm}
+            herd={herd}
+            deltas={deltas}
+            deltaKey={deltaKey}
+          />
+        ))}
+      </div>
 
-          return (
-            <article
-              key={`${key}-${deltaKey}`}
-              className={cn(
-                styles.pen,
-                !empty && styles.filled,
-                delta > 0 && styles.gain,
-                delta < 0 && styles.loss,
-              )}
-            >
-              <span className={cn(styles.signIconWrap, empty && styles.signIconIdle)}>
-                <Sprite src={ANIMAL_SPRITES[key]} emoji={meta.emoji} className={styles.signIcon} />
-              </span>
-
-              <span className={styles.info}>
-                <b className={styles.house}>{meta.house}</b>
-                <span className={styles.role}>
-                  {empty ? 'порожньо' : `${count} у дворі`}
-                  <span className={styles.roleLong}> · {PEN_ROLE[key]}</span>
-                </span>
-                <span className={styles.meta}>
-                  <b className={cn(styles.count, !empty && !isDog && styles.countDone)}>×{count}</b>
-                  <span className={styles.herd}>🧺{herd[key]}</span>
-                </span>
-              </span>
-
-              {/* Спрайт-«розсип» у дворі — лише на ПК, де під це є місце. */}
-              <span className={styles.yard} aria-hidden>
-                {!empty &&
-                  Array.from({ length: shown }, (_, index) => (
-                    <Sprite
-                      key={index}
-                      src={ANIMAL_SPRITES[key]}
-                      emoji={meta.emoji}
-                      className={styles.token}
-                    />
-                  ))}
-                {count > shown && <span className={styles.more}>+{count - shown}</span>}
-              </span>
-
-              {delta !== 0 && (
-                <span className={cn(styles.delta, delta > 0 ? styles.plus : styles.minus)}>
-                  {delta > 0 ? '+' : ''}
-                  {delta}
-                </span>
-              )}
-            </article>
-          );
-        })}
+      {/* 2. Охорона — окремо: собаки не дають перемоги, вони захищають двір. */}
+      <div className={styles.guard}>
+        <span className={styles.guardLabel}>🛡 Охорона двору</span>
+        <div className={styles.guardRow}>
+          {DOGS.map((dog) => (
+            <Pen
+              key={dog}
+              species={dog}
+              farm={farm}
+              herd={herd}
+              deltas={deltas}
+              deltaKey={deltaKey}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );

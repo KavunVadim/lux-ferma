@@ -75,7 +75,6 @@ export function TradeSheet({
     <section className={styles.tradeGroup}>
       <header className={cn(styles.groupHead, accent)}>
         <b>{group.title}</b>
-        <span className={styles.groupHint}>{group.hint}</span>
       </header>
 
       <div className={styles.tradeList}>
@@ -86,29 +85,51 @@ export function TradeSheet({
             className={styles.tradeOption}
             onClick={() => onChoose(option)}
           >
+            {/*
+             * Компактна картка в ОДИН рядок:
+             *   [іконка−N ↓ іконка+N]  |  [8 24]
+             *
+             * Спершу було три поверхи (схема, потім «у дворі/у стаді»
+             * великими, потім «→ N»), і кожна картка займала ~115px. Тепер
+             * дія і числа стоять поруч: ліворуч ЩО міняємо, праворуч СКІЛЬКИ
+             * є зараз. На 390px це вміщається й панель перестає гортатись.
+             */}
+            {/*
+             * Схема обміну: «віддаю ↓ отримую».
+             *
+             * Два числа показані ПО-РІЗНОМУ, бо це різні речі:
+             *  · жовте коло — АБСОЛЮТОМ у куточку іконки: скільки цих тварин
+             *    У ДВОРІ (те, що віддаємо). Куточок читається як бейдж на
+             *    «своїй» тварині;
+             *  · синє з 🧺 — окремим чипом у рядку: скільки У СТАДІ (запас).
+             *    Його на іконку не вішаємо, бо стадо — не властивість цієї
+             *    тварини, а спільний запас гравця.
+             */}
             <span className={styles.optionRow}>
-              <span className={styles.side}>
-                <Sprite
-                  src={ANIMAL_SPRITES[option.from]}
-                  emoji={ANIMALS[option.from].emoji}
-                  className={styles.tradeToken}
-                />
-                <b>−{option.fromQty}</b>
+              <span className={cn(styles.side, styles.sideOut)}>
+                <span className={styles.tokenWrap}>
+                  <Sprite
+                    src={ANIMAL_SPRITES[option.from]}
+                    emoji={ANIMALS[option.from].emoji}
+                    className={styles.tradeToken}
+                  />
+                  <b className={cn(styles.tokenCount, styles.countYard)}>{farm[option.from]}</b>
+                </span>
+                <b className={styles.qtyOut}>−{option.fromQty}</b>
               </span>
-              <span className={styles.tradeArrow}>➜</span>
-              <span className={styles.side}>
+              <span className={styles.tradeArrow}>↓</span>
+              <span className={cn(styles.side, styles.sideIn)}>
                 <Sprite
                   src={ANIMAL_SPRITES[option.to]}
                   emoji={ANIMALS[option.to].emoji}
                   className={styles.tradeToken}
                 />
-                <b>+{option.toQty}</b>
+                <b className={styles.qtyIn}>+{option.toQty}</b>
+                <b className={cn(styles.tokenCount, styles.countHerd)}>
+                  <span aria-hidden>🧺</span>
+                  {herd[option.to]}
+                </b>
               </span>
-            </span>
-            <span className={styles.optionCounts}>
-              у дворі {farm[option.from]} → <b>{farm[option.from] - option.fromQty}</b>
-              <span className={styles.dotSep}>·</span>
-              у стаді {herd[option.to]} → <b>{herd[option.to] - option.toQty}</b>
             </span>
           </button>
         ))}
@@ -147,7 +168,11 @@ export function TradeSheet({
           </div>
         ) : (
           <>
-            {/* Два напрямки поруч: вгору — ліва колонка, вниз — права. */}
+            {/*
+             * Дві колонки: «Вгору» ліворуч, «Вниз» праворуч. На телефоні вони
+             * лишаються поруч (РІВНО два треки, а не один) — саме так напрямок
+             * читається одним поглядом, а список не тягнеться на три екрани.
+             */}
             <div className={styles.tradeColumns}>
               <div className={styles.tradeColumn}>{up && groupSection(up, styles.groupHeadUp)}</div>
               <div className={styles.tradeColumn}>{down && groupSection(down, styles.groupHeadDown)}</div>

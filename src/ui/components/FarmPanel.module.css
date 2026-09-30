@@ -44,7 +44,7 @@
 }
 
 .progressLabel b {
-  color: var(--leaf-dark);
+  color: var(--leaf);
   font-size: 0.95rem;
 }
 
@@ -61,16 +61,18 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #6ab04c, var(--leaf-dark));
+  background: linear-gradient(90deg, var(--leaf), var(--leaf-dark));
   transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ── Сітка дворів ────────────────────────────────────────────────────────── */
 
 /*
- * `flex: 1` + `grid-auto-rows: 1fr` дають дві речі одночасно: панель забирає
- * всю вільну висоту (немає порожньої смуги знизу), а сім рядків ділять її
- * РІВНОМІРНО — без «гуляючих» проміжків між плитками.
+ * Сітка П'ЯТИ ВИДІВ (собаки — окремо нижче, у .guard).
+ *
+ * `flex: 1` + `grid-auto-rows: 1fr`: сітка забирає вільну висоту й ділить її
+ * між трьома рядками рівномірно — без порожньої смуги знизу і без
+ * «гуляючих» проміжків.
  */
 .pens {
   display: grid;
@@ -79,6 +81,36 @@
   grid-auto-rows: minmax(0, 1fr);
   gap: 6px;
   min-height: 0;
+}
+
+/*
+ * Охорона двору — окремий блок під сіткою видів.
+ *
+ * Собаки не входять у набір перемоги (потрібні п'ять видів), тож в одній
+ * сітці з ними вони виглядали як «шостий і сьомий вид». Тут вони стоять
+ * парою під підписом — видно, що це захист, а не мета.
+ */
+.guard {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 2px dashed color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+.guardLabel {
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.guardRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .pen {
@@ -90,7 +122,9 @@
   padding: 8px 9px;
   border: 2px solid var(--line);
   border-radius: 15px;
-  background: #fff8ea;
+  /* var(--cream), а не #fff8ea: хардкод ламав темну тему — там --ink
+     світлий, і назви ставали світлими на світлому. */
+  background: var(--cream);
   transition:
     border-color 0.2s ease,
     background 0.2s ease;
@@ -98,7 +132,7 @@
 
 .filled {
   border-color: var(--gold-dark);
-  background: #fffdf4;
+  background: var(--card);
 }
 
 /*
@@ -107,11 +141,11 @@
  */
 .pen:not(.filled) {
   border-style: dashed;
-  background: color-mix(in srgb, var(--cream) 70%, var(--cream-2));
+  background: color-mix(in srgb, var(--cream) 55%, var(--cream-2));
 }
 
 .pen:not(.filled) .house {
-  color: color-mix(in srgb, var(--ink) 78%, var(--cream));
+  color: color-mix(in srgb, var(--ink) 82%, var(--cream));
 }
 
 .pen:not(.filled) .role {
@@ -127,7 +161,7 @@
   width: 44px;
   height: 44px;
   border-radius: 13px;
-  background: color-mix(in srgb, var(--gold) 18%, #fff);
+  background: color-mix(in srgb, var(--gold) 18%, var(--card));
 }
 
 .signIconIdle {
@@ -201,6 +235,9 @@
 
 .countDone {
   background: var(--hay);
+  /* Хардкод #5a4014, а не --ink: підпис стоїть на --hay (жовтий) в ОБОХ
+     темах, тож колір має бути темним завжди — --ink у темній темі світлий
+     і дав би світле на жовтому. */
   color: #5a4014;
 }
 
@@ -317,6 +354,16 @@
     gap: 8px;
   }
 
+  /* Охорона на ПК: дві картки під сіткою видів, той самий розмір. */
+  .guardRow {
+    grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
+    gap: 8px;
+  }
+
+  .guardLabel {
+    font-size: 0.72rem;
+  }
+
   .pen {
     flex-direction: column;
     align-items: stretch;
@@ -423,13 +470,8 @@
 }
 
 /*
- * Собаки — не «шостий і сьомий вид», а захист: вони стоять парою внизу й
- * мають пунктирну рамку, поки порожні.
+ * Порожній двір — пунктирна рамка (пунктир ставимо у .pen:not(.filled) вище).
+ * Селекторів :nth-last-child більше немає: собаки винесені в окрему сітку,
+ * і ці правила зачіпали б останні два ВИДИ (свиню та корову) — вони б
+ * виглядали як «не вид».
  */
-.pen:nth-last-child(-n + 2) {
-  border-style: dashed;
-}
-
-.pen:nth-last-child(-n + 2).filled {
-  border-style: solid;
-}
