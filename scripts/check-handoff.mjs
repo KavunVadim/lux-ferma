@@ -1,6 +1,12 @@
 /**
- * Перевірка, що оверлей передачі ходу сам зникає (AUTO_HIDE_MS) і не висить
- * на екрані, перекриваючи інтерфейс.
+ * Перевірка екрана передачі пристрою.
+ *
+ * Поведінка (замість таймера, що сам закривав екран за 2.4 с):
+ *  1) після старту/завершення ходу екран передачі показано;
+ *  2) він НЕ зникає сам — гравець мусить свідомо підтвердити;
+ *  3) кнопка спершу заблокована (палець того, хто віддає, не почне хід);
+ *  4) показано ім'я й аватар того, чий хід;
+ *  5) після натискання екран зникає і гра доступна.
  *
  * Запуск: node scripts/check-handoff.mjs [url]
  */
@@ -75,39 +81,61 @@ async function run() {
   const clickText = (t) => s.eval(`(() => { const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes(${JSON.stringify(t)})); if(!b) return false; b.click(); return true; })()`);
   const waitFor = async (expr, tries = 40, delay = 250) => { for (let i=0;i<tries;i+=1){ if (await s.eval(expr)) return true; await sleep(delay);} return false; };
 
-  const handoffVisible = () => s.eval(`!!document.querySelector('[class*="handoff"]')`);
+  const passVisible = () => s.eval(`!!document.querySelector('[class*="passName"]')`);
+  // Кнопка в заблокованому стані має текст «…», тому шукаємо її за класом,
+  // а не за підписом — інакше перевірка «заблокована спершу» нічого не бачить.
+  const btnState = () => s.eval(`(() => {
+    const b = document.querySelector('button[class*="passButton"]');
+    return b ? { disabled: b.disabled, text: b.textContent.trim() } : null;
+  })()`);
+
+  console.log(`\n▸ ${URL_} @ iPhone 390x844\n`);
 
   await waitFor(`!![...document.querySelectorAll('button')].find(b=>b.textContent.includes('Почати гру'))`);
   await clickText('Почати гру');
-  await sleep(500);
+  await sleep(150);
 
-  const shown = await handoffVisible();
-  check('після старту оверлей передачі показано', shown);
+  check('після старту екран передачі показано', await passVisible());
   await s.shoot('/tmp/handoff-shown.png');
 
-  // Чекаємо авто-закриття (AUTO_HIDE_MS = 2400 + запас)
-  let gone = false;
-  for (let i = 0; i < 16; i += 1) {
-    await sleep(300);
-    if (!(await handoffVisible())) { gone = true; break; }
-  }
-  check('оверлей сам зникає без тапу', gone, gone ? 'так' : 'висіть понад 5 с');
-  await s.shoot('/tmp/handoff-gone.png');
+  const early = await btnState();
+  check('кнопка спершу заблокована', early?.disabled === true, JSON.stringify(early));
 
-  // Чи видно список дворів після зникнення
-  const farmVisible = await s.eval(`(() => {
-    const pen = document.querySelector('[class*="_pen_"]');
-    if (!pen) return { found: false };
-    const r = pen.getBoundingClientRect();
-    // чи не перекриває його щось у центрі екрана
-    const center = document.elementFromPoint(window.innerWidth / 2, r.top + r.height / 2);
-    return { found: true, top: Math.round(r.top), coveredBy: center?.className?.toString().slice(0, 60) ?? null };
-  })()`);
-  console.log('перший двір:', JSON.stringify(farmVisible));
-  check('двір видно і не перекрито', farmVisible.found);
+  await sleep(650);
+  const ready = await btnState();
+  check('кнопка активувалась після паузи', ready?.disabled === false, JSON.stringify(ready));
+
+  // Головна зміна: екран більше не зникає сам
+  let stillThere = true;
+  for (let i = 0; i < 10; i += 1) {
+    await sleep(400);
+    if (!(await passVisible())) { stillThere = false; break; }
+  }
+  check('екран НЕ зникає сам за 4 с', stillThere);
+
+  const who = await s.eval(`(() => ({
+    name: document.querySelector('[class*="passName"]')?.textContent ?? '',
+    label: document.querySelector('[class*="passLabel"]')?.textContent ?? '',
+    avatar: document.querySelector('[class*="passAvatar"]')?.textContent ?? '',
+  }))()`);
+  console.log('екран передачі:', JSON.stringify(who));
+  check('показано ім\'я гравця', who.name.length > 0, who.name);
+  check('показано аватар', who.avatar.length > 0, who.avatar);
+
+  await clickText('Я готовий');
+  let closed = false;
+  for (let i = 0; i < 12; i += 1) {
+    await sleep(250);
+    if (!(await passVisible())) { closed = true; break; }
+  }
+  check('натискання «Я готовий» закриває екран', closed);
+  await s.shoot('/tmp/handoff-gone.png');
+  check('гра доступна після підтвердження',
+    await waitFor(`!![...document.querySelectorAll('button')].find(b=>b.textContent.includes('Кинути кубики'))`, 8, 250));
 
   const failed = checks.filter((c) => !c.ok);
   console.log(`\nРЕЗУЛЬТАТ: ${failed.length === 0 ? 'усе гаразд ✅' : `${failed.length} провал(ів) ❌`}`);
+  console.log('Знімки: /tmp/handoff-shown.png, /tmp/handoff-gone.png');
   return failed.length;
 }
 

@@ -54,6 +54,8 @@ export interface HandoffView {
   name: string;
   color: string;
   label: string;
+  /** Емодзі-аватар гравця — щоб екран передачі був упізнаваний здалеку. */
+  avatar: string;
 }
 
 export interface GameApi {
@@ -205,7 +207,7 @@ export function useGame(): GameApi {
       saveGame(created);
       setHasSave(true);
       const player = created.players[0];
-      if (player) setHandoff({ name: player.name, color: player.color, label: 'Починає гру' });
+      if (player) setHandoff({ name: player.name, color: player.color, avatar: player.avatar, label: 'Починає гру' });
     },
     [settings],
   );
@@ -325,7 +327,7 @@ export function useGame(): GameApi {
     setDeltas({});
 
     const player = next.players[next.current];
-    if (player) setHandoff({ name: player.name, color: player.color, label: 'Передай пристрій гравцю' });
+    if (player) setHandoff({ name: player.name, color: player.color, avatar: player.avatar, label: 'Твій хід' });
   }, [pushHistory]);
 
   const trade = useCallback(
