@@ -13,7 +13,13 @@
  */
 import { spawn } from 'node:child_process';
 
-const URL_ = process.argv[2] ?? 'http://localhost:4173/';
+/*
+ * ВАЖЛИВО: редактор карти існує лише в dev-збірці (import.meta.env.DEV у
+ * GameScreen.tsx). У продакшн-білді (npm run preview) він вирізається разом
+ * із lazy-імпортом, тому ?editor=1 нічого не відкриває. Тому за замовчуванням
+ * ходимо на dev-сервер (5173), а не на preview (4173).
+ */
+const URL_ = process.argv[2] ?? 'http://localhost:5173/';
 const PORT = 9345;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -225,19 +231,32 @@ await sleep(3200);
 await evaluate(`try { localStorage.clear(); } catch {}`);
 await send('Page.reload', { ignoreCache: true });
 await sleep(4200);
+const isDev = await evaluate(`(() => !!document.querySelector('script[src*="/src/main"]'))`);
+if (!isDev && !editorRequested) {
+  console.log('⚠ це не dev-сервер: редактор існує лише на npm run dev (5173)');
+}
 const editor = await evaluate(`
   (() => {
-    const all = [...document.querySelectorAll('*')];
+    const panel = document.querySelector('[class*="panel"]');
     return {
-      autoOpened: all.some((el) => /panel/i.test(String(el.className ?? ''))),
-      handoffVisible: !!document.querySelector('[class*="handoff"]'),
+      viewport: [window.innerWidth, window.innerHeight],
+      autoOpened: !!panel,
+      panelHead: !!document.querySelector('[class*="panelHead"]'),
+      // Маркери загонів/будівель малюються лише коли карту видно.
+      boxes: document.querySelectorAll('[class*="box"]').length,
       handles: document.querySelectorAll('[class*="handle"]').length,
-      hasCopyButton: [...document.querySelectorAll('button')].some((b) => /Копіювати JSON/.test(b.textContent)),
-      labels: [...document.querySelectorAll('[class*="label"]')].slice(0, 3).map((el) => el.textContent.trim()),
+      labels: [...document.querySelectorAll('[class*="tag"]')].slice(0, 3).map((el) => el.textContent.trim()),
     };
   })()
 `);
 console.log('редактор:', JSON.stringify(editor));
+if (!editor.autoOpened) {
+  console.log('✗ редактор не відкрився за ?editor=1 при ширині', editor.viewport.join('x'));
+} else if (!editor.boxes) {
+  console.log('✗ панель є, але маркерів загонів на карті немає');
+} else {
+  console.log(`✓ редактор відкрився: панель + ${editor.boxes} маркерів, ${editor.handles} ручок`);
+}
 
 /* ── Панель можна перетягнути й згорнути ── */
 const rectOf = (selector) =>
@@ -250,37 +269,52 @@ const rectOf = (selector) =>
 
 const panelBefore = await rectOf('[class*="panel"]');
 const head = await rectOf('[class*="panelHead"]');
-if (head) {
+
+/*
+ * Панель слухає POINTER-події (onPointerDown/Move/Up + setPointerCapture), тому
+ * Input.dispatchMouseEvent її не рухає — React просто не бачить pointer-потоку.
+ * Шлемо справжні pointer-події з правильним pointerId.
+ */
+if (head && panelBefore) {
   const from = { x: head.x + head.w / 2, y: head.y + head.h / 2 };
-  await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: from.x, y: from.y, button: 'left', clickCount: 1 });
-  for (let step = 1; step <= 6; step += 1) {
+  const to = { x: from.x + 260, y: from.y - 140 };
+  const pointer = { pointerType: 'mouse', button: 'left', buttons: 1, clickCount: 1 };
+
+  await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: from.x, y: from.y, button: 'left', buttons: 1, clickCount: 1, pointerType: 'mouse' });
+  for (let step = 1; step <= 8; step += 1) {
     await send('Input.dispatchMouseEvent', {
       type: 'mouseMoved',
-      x: from.x + (280 * step) / 6,
-      y: from.y - (150 * step) / 6,
+      x: from.x + ((to.x - from.x) * step) / 8,
+      y: from.y + ((to.y - from.y) * step) / 8,
       button: 'left',
+      buttons: 1,
+      pointerType: 'mouse',
     });
-    await sleep(30);
+    await sleep(40);
   }
-  await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: from.x + 280, y: from.y - 150, button: 'left' });
-  await sleep(250);
+  await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: to.x, y: to.y, button: 'left', buttons: 0, clickCount: 1, pointerType: 'mouse' });
+  await sleep(350);
 }
+
 const panelAfter = await rectOf('[class*="panel"]');
-const moved = panelBefore && panelAfter && (panelAfter.x !== panelBefore.x || panelAfter.y !== panelBefore.y);
+const moved =
+  panelBefore && panelAfter && (Math.abs(panelAfter.x - panelBefore.x) > 4 || Math.abs(panelAfter.y - panelBefore.y) > 4);
 console.log(`панель: ${JSON.stringify(panelBefore)} → ${JSON.stringify(panelAfter)} · перетягнулась: ${moved ? 'так ✓' : 'НІ ✗'}`);
 
-await evaluate(`(() => {
+// Згортання/розгортання панелі — теж через pointer + клік по кнопці.
+const collapseBtn = await evaluate(`(() => {
   const btn = [...document.querySelectorAll('button')].find((b) => /згорнути/.test(b.textContent));
-  if (btn) btn.click();
-  return !!btn;
+  if (!btn) return null;
+  btn.click();
+  return btn.textContent.trim();
 })()`);
-await sleep(300);
+await sleep(350);
 const collapsed = await evaluate(`(() => ({
   codeVisible: !!document.querySelector('[class*="code"]'),
-  handled: !!document.querySelector('[class*="handle"]'),
+  panelWidth: document.querySelector('[class*="panel"]')?.getBoundingClientRect().width ?? 0,
   label: [...document.querySelectorAll('button')].map((b) => b.textContent.trim()).find((t) => /розгорнути|згорнути/.test(t)) ?? null,
 }))()`);
-console.log('після згортання:', JSON.stringify(collapsed));
+console.log('після згортання:', JSON.stringify({ clicked: collapseBtn, ...collapsed }));
 await shoot('/tmp/editor-panel.png');
 
 /* ── Розмір спрайтів за видами (собаки мають бути більші) ── */

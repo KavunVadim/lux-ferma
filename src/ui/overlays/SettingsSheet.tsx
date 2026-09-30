@@ -1,5 +1,6 @@
 import { DICE_PRESETS, PREDATOR_MODES, TRADE_LIMIT_OPTIONS } from '../../game/config';
 import type { DicePreset, PredatorMode } from '../../game/config';
+import { hapticsSupported, testHaptic } from '../../game/haptics';
 import { ALL_EFFECTS, sound } from '../../game/sound';
 import { BALANCE_PRESETS, EFFECT_LABELS } from '../../game/settings';
 import type { AppSettings, ThemeMode } from '../../game/settings';
@@ -227,7 +228,11 @@ export function SettingsSheet({
 
         <OptionRow<boolean>
           title="📳 Вібрація"
-          hint="тактильний відгук на телефоні"
+          hint={
+            hapticsSupported()
+              ? 'тактильний відгук на телефоні'
+              : 'на цьому пристрої браузер не дає доступу до вібрації'
+          }
           options={[
             { value: true, label: 'Увімкнено', hint: 'легкий відгук на дії' },
             { value: false, label: 'Вимкнено', hint: 'без вібрації' },
@@ -235,6 +240,27 @@ export function SettingsSheet({
           value={settings.vibration}
           onSelect={(value) => onChange({ vibration: value })}
         />
+
+        {/*
+         * На iPhone navigator.vibrate не існує — єдиний шлях це імпульс через
+         * AudioContext. Тому даємо гравцеві самому перевірити: якщо відгуку
+         * немає, він знатиме, що це пристрій, а не гра.
+         */}
+        <button
+          type="button"
+          className={styles.soundTest}
+          disabled={!settings.vibration}
+          onClick={() => testHaptic()}
+        >
+          📳 Перевірити вібрацію
+          <span>
+            {!settings.vibration
+              ? 'вібрацію вимкнено — увімкни вище'
+              : hapticsSupported()
+                ? 'натисни — має бути короткий поштовх'
+                : 'цей браузер не підтримує вібрацію'}
+          </span>
+        </button>
 
         <OptionRow<ThemeMode>
           title="🎨 Тема"

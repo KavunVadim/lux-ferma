@@ -5,6 +5,8 @@
  * Кожен сигнал має ідентифікатор (`SoundEffect`), тож у налаштуваннях можна
  * вимкнути окремі звуки — а не лише весь звук цілком.
  */
+import { primeHapticsAudio } from './haptics';
+
 type BeepType = 'sine' | 'square' | 'triangle' | 'sawtooth';
 
 /** Ідентифікатори сигналів, які можна вмикати/вимикати окремо. */
@@ -53,6 +55,9 @@ class SoundEngine {
     if (typeof window !== 'undefined') {
       const unlock = () => {
         this.unlock();
+        // Той самий перший дотик — єдиний шанс створити AudioContext для
+        // тактильного відгуку на iOS (див. game/haptics.ts).
+        primeHapticsAudio();
         window.removeEventListener('pointerdown', unlock);
         window.removeEventListener('keydown', unlock);
       };

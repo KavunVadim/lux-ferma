@@ -54,6 +54,40 @@
   visibility: hidden;
 }
 
+/*
+ * Заглушка замість кубиків до кидка: та сама висота, але замість порожніх
+ * клітинок — підказка до дії. Так екран не «стрибає», коли кубики з'явились,
+ * і гравець одразу бачить, що робити.
+ */
+.diceHint {
+  gap: 4px;
+  justify-content: center;
+  min-height: 96px;
+  opacity: 0.9;
+}
+
+.hintIcon {
+  font-size: 1.9rem;
+  line-height: 1;
+  animation: hint-float 2.6s ease-in-out infinite;
+}
+
+@keyframes hint-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(4deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hintIcon {
+    animation: none;
+  }
+}
+
 .ticker {
   display: -webkit-box;
   -webkit-box-orient: vertical;

@@ -68,12 +68,16 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
   const winOpen = state.over && !game.result;
 
   /**
-   * Кубики в HUD. Модалка результату показує той самий кидок, тому під час
-   * неї HUD-кубики приховуємо: інакше гравець бачить два однакові набори
-   * (один за оверлеєм) і це читається як помилка. Місце зберігаємо через
-   * visibility, щоб картка не стрибала в розкладці.
+   * Кубики в HUD.
+   *
+   * Показуємо їх ЛИШЕ коли є що показувати: триває кидок або вже випав
+   * результат цього ходу. Порожні клітинки з «?» до кидка нічого не
+   * повідомляють і лише з'їдають третину мобільного екрана — замість них
+   * підказка до дії. Коли відкрита модалка результату, HUD ховаємо, щоб
+   * той самий кидок не дублювався двічі.
    */
-  const diceCard = (
+  const showDice = game.rolling || state.dice !== null || !!game.result;
+  const diceCard = showDice ? (
     <div className={cn('card', styles.diceCard, game.result && styles.diceCardMuted)}>
       <Dice
         faces={(game.rolling || game.result) ? game.rollTarget : state.dice}
@@ -82,6 +86,15 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
         flickerPredators={game.settings.diceFlicker}
       />
       <p className={styles.ticker}>{game.rolling ? 'Кубики летять…' : state.message}</p>
+    </div>
+  ) : (
+    <div className={cn('card', styles.diceCard, styles.diceHint)}>
+      <span className={styles.hintIcon} aria-hidden>
+        🎲
+      </span>
+      <p className={styles.ticker}>
+        {state.rolled ? 'Хід зроблено — передай пристрій' : 'Кинь кубики, щоб почати хід'}
+      </p>
     </div>
   );
 
