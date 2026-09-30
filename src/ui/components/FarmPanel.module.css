@@ -100,6 +100,42 @@
 }
 
 /*
+ * Розділювач охорони в сітці.
+ *
+ * Іде на всю ширину (grid-column 1/-1) і малюється ПУНКТИРОМ: собаки не
+ * входять у набір перемоги, тож мусять бути візуально відрізані від п'яти
+ * видів. Без цього вони читаються як «шостий і сьомий вид».
+ */
+/*
+ * Рядок розділювача має бути ТОНКИМ.
+ *
+ * Сітка має `grid-auto-rows: 1fr`, тобто ділить висоту порівну між рядками.
+ * Для рядка з лінією це означало цілу смугу пустоти — саме вона й висіла між
+ * коровою та собаками. `height: 0` виводить рядок із розподілу: лишається
+ * тільки сама лінія.
+ */
+.guardDivider {
+  grid-column: 1 / -1;
+  align-self: center;
+  height: 0;
+  border-top: 2px dashed color-mix(in srgb, var(--ink) 26%, transparent);
+}
+
+.guardLabel {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  /* Підпис сідає НА лінію, розриваючи її — так він читається як заголовок
+     розділу, а не як зайвий рядок. */
+  transform: translateY(-50%);
+}
+
+/*
  * Кроки драбини цінності.
  *
  * Що старша тварина, то більша плитка: качки/кози (base) → свині/коні
@@ -120,9 +156,37 @@
   font-size: 1.16rem;
 }
 
-/* Корова: найбільша плитка і єдина, що займає обидві колонки. */
+/*
+ * Корова: найбільша плитка і єдина на всю ширину.
+ *
+ * Блок тягнеться на обидві колонки, але ВМІСТ центрований — іконка, назва й
+ * числа стоять посередині, а не розкидані по краях. Інакше на широкій плитці
+ * між іконкою та назвою утворюється провал.
+ */
 .pen[data-tier='3'] {
   grid-column: 1 / -1;
+  /* Центруємо весь вміст плитки: іконку і текст разом. Без цього пара
+     «іконка + текст» притискалась до лівого краю, і на широкій плитці
+     утворювався провал справа. */
+  justify-content: center;
+  gap: 14px;
+}
+
+/* Текстова колонка тримається вмісту, а не тягнеться на всю ширину —
+   інакше назва «Корови» відлітає від іконки в правий край. */
+.pen[data-tier='3'] .info {
+  flex: 0 1 auto;
+  align-items: center;
+  text-align: center;
+  overflow: visible;
+}
+
+.pen[data-tier='3'] .house {
+  font-size: 1.34rem;
+}
+
+.pen[data-tier='3'] .meta {
+  justify-content: center;
 }
 
 .pen[data-tier='3'] .signIconWrap {
@@ -349,14 +413,55 @@
   color: var(--barn-dark);
 }
 
+/*
+ * ТРИ РІЗНІ АНІМАЦІЇ — за трьома різними подіями.
+ *
+ * Виразність тут не декор: за одним столом телефон лежить між гравцями, і
+ * подію треба впізнати боковим зором, не вчитуючись у текст. Тому кожна дія
+ * має власний характер руху:
+ *
+ *   .gain   РОЗМНОЖЕННЯ — пружний стрибок угору зі спалахом. Найдобріша
+ *           подія ходу, тож найпомітніша.
+ *   .loss   КРАДІЖКА — різкий ривок убік із нахилом: двір «виривають».
+ *   .saved  ВІДГАНЯННЯ — поштовх уперед і спалах золота: пес відбив напад.
+ */
 .gain {
   border-color: var(--leaf);
-  animation: pen-bump 0.8s cubic-bezier(0.2, 1.6, 0.4, 1);
+  animation: pen-bump 0.85s cubic-bezier(0.2, 1.6, 0.4, 1);
+  z-index: 1;
 }
 
 .loss {
   border-color: var(--barn);
-  animation: pen-shake 0.55s ease;
+  animation: pen-steal 0.7s ease;
+  z-index: 1;
+}
+
+.saved {
+  border-color: var(--gold-dark);
+  animation: pen-save 0.75s cubic-bezier(0.3, 1.5, 0.5, 1);
+  z-index: 1;
+}
+
+/* Хижак пролітає крізь плитку: показуємо це тінню, що тягнеться за нею. */
+.loss::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: raid-swipe 0.7s ease-out forwards;
+}
+
+/* Спалах захисту: золоте кільце, що розходиться від плитки. */
+.saved::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 3px solid var(--gold);
+  pointer-events: none;
+  animation: save-ring 0.75s ease-out forwards;
 }
 
 @keyframes delta-float {
@@ -374,29 +479,90 @@
   }
 }
 
+/* РОЗМНОЖЕННЯ: пружний стрибок угору + спалах кільця. */
 @keyframes pen-bump {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--leaf) 0%, transparent);
+  }
+  30% {
+    transform: translateY(-6px) scale(1.05);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--leaf) 45%, transparent);
+  }
+  60% {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--leaf) 30%, transparent);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--leaf) 0%, transparent);
+  }
+}
+
+/* КРАДІЖКА: двір виривають — ривок убік із нахилом, потім повернення. */
+@keyframes pen-steal {
+  0% {
+    transform: translateX(0) rotate(0);
+  }
+  18% {
+    transform: translateX(-9px) rotate(-2.5deg);
+  }
+  40% {
+    transform: translateX(7px) rotate(2deg);
+  }
+  62% {
+    transform: translateX(-4px) rotate(-1deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+}
+
+/* Хижак: тінь-серпанок пролітає плитку справа наліво. */
+@keyframes raid-swipe {
+  0% {
+    background: linear-gradient(100deg, transparent 40%, rgba(0, 0, 0, 0) 50%, transparent 60%);
+    box-shadow: none;
+  }
+  35% {
+    box-shadow: inset 14px 0 22px -8px rgba(0, 0, 0, 0.55);
+  }
+  70% {
+    box-shadow: inset -14px 0 22px -8px rgba(0, 0, 0, 0.35);
+  }
+  100% {
+    box-shadow: inset 0 0 0 0 rgba(0, 0, 0, 0);
+  }
+}
+
+/* ВІДГАНЯННЯ: поштовх уперед, як від удару. */
+@keyframes pen-save {
   0% {
     transform: scale(1);
   }
-  35% {
-    transform: scale(1.025);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--leaf) 40%, transparent);
+  25% {
+    transform: scale(1.07);
+  }
+  45% {
+    transform: scale(0.99);
+  }
+  70% {
+    transform: scale(1.03);
   }
   100% {
     transform: scale(1);
   }
 }
 
-@keyframes pen-shake {
-  0%,
+/* Золоте кільце, що розходиться від плитки: «напад відбито». */
+@keyframes save-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.96);
+  }
   100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-5px);
-  }
-  75% {
-    transform: translateX(5px);
+    opacity: 0;
+    transform: scale(1.14);
   }
 }
 

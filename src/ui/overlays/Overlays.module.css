@@ -15,19 +15,23 @@
   border-radius: 16px;
   background: color-mix(in srgb, var(--ink) 8%, transparent);
   text-align: center;
-  animation: headline-in 0.35s cubic-bezier(0.2, 1.5, 0.4, 1);
+  animation: headline-in 0.5s cubic-bezier(0.2, 1.6, 0.4, 1);
 }
 
 .headline b {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 800;
   line-height: 1.15;
 }
 
 .headlineIcon {
-  font-size: 1.9rem;
+  font-size: 2.1rem;
   line-height: 1;
+  /* Іконка події «дихає»: прибуття тварини має впадати в око, а не просто
+     стояти поруч із текстом. */
+  animation: headline-icon 1.6s ease-in-out infinite;
+  transform-origin: center bottom;
 }
 
 .headlineGood {
@@ -40,19 +44,40 @@
   color: var(--barn-dark);
 }
 
+/*
+ * Вхід головного заголовка: не просто поява, а удар — різке збільшення з
+ * невеликим перельотом, потім осідання. Подія ходу має «стукнути» по очах,
+ * бо за столом на неї дивляться боковим зором.
+ */
 @keyframes headline-in {
-  from {
+  0% {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.82) translateY(8px);
   }
-  to {
+  55% {
     opacity: 1;
-    transform: none;
+    transform: scale(1.055) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Іконка тварини: легкий «вдих-видих», як живий звір у руках. */
+@keyframes headline-icon {
+  0%,
+  100% {
+    transform: scale(1) rotate(-2deg);
+  }
+  50% {
+    transform: scale(1.12) rotate(2deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .headline {
+  .headline,
+  .headlineIcon {
     animation: none;
   }
 }
@@ -196,6 +221,18 @@
   display: flex;
   gap: 10px;
   padding: 10px 14px 14px;
+}
+
+/*
+ * Кнопка «Ок, далі» на модалці результату.
+ *
+ * Це ЄДИНА дія на екрані, і саме її шукає палець після прочитання результату.
+ * 64px заввишки і 1.12rem: більша за звичайну кнопку, бо телефон лежить на
+ * столі між гравцями й по ній тиснуть по черзі.
+ */
+.actions :global(.btn) {
+  min-height: 64px;
+  font-size: 1.12rem;
 }
 
 .actions > * {

@@ -69,6 +69,8 @@ export interface GameApi {
   events: GameEvent[];
   deltas: Partial<Record<HerdKey, number>>;
   deltaKey: number;
+  /** Пес, який цього ходу відігнав хижака — для власної анімації плитки. */
+  savedGuard: HerdKey | null;
   toast: string | null;
   trades: TradeOption[];
   /** Скільки обмінів уже зроблено цього ходу. */
@@ -120,6 +122,14 @@ export function useGame(): GameApi {
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [deltas, setDeltas] = useState<Partial<Record<HerdKey, number>>>({});
   const [deltaKey, setDeltaKey] = useState(0);
+  /*
+   * Пес, який цього ходу відігнав хижака.
+   *
+   * У нього дельта −1 (він повертається у спільне стадо), тож без окремого
+   * прапорця плитка показувала б «втрату» — хоча насправді пес урятував двір.
+   * Потрібно для власної анімації відганяння.
+   */
+  const [savedGuard, setSavedGuard] = useState<HerdKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [hasSave, setHasSave] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
@@ -183,10 +193,17 @@ export function useGame(): GameApi {
   }, [state]);
 
   const flashDeltas = useCallback(
-    (nextDeltas: Partial<Record<HerdKey, number>>) => {
+    (nextDeltas: Partial<Record<HerdKey, number>>, events: GameEvent[] = []) => {
       setDeltas(nextDeltas);
       setDeltaKey((value) => value + 1);
-      later(DELTA_LIFETIME, () => setDeltas({}));
+      // Хто відігнав хижака — з подій ходу, а не з дельт: у дельтах пес
+      // виглядає як −1, тобто як втрата.
+      const guard = events.find((event) => event.kind === 'save' && event.subject);
+      setSavedGuard(guard?.subject ?? null);
+      later(DELTA_LIFETIME, () => {
+        setDeltas({});
+        setSavedGuard(null);
+      });
     },
     [later],
   );
@@ -306,7 +323,7 @@ export function useGame(): GameApi {
       const before = stateRef.current;
       setState(outcome.state);
       setEvents(outcome.events);
-      flashDeltas(outcome.deltas);
+      flashDeltas(outcome.deltas, outcome.events);
       if (outcome.won) setHasSave(false);
       // Кидок можна відкотити: у стек іде стан ДО кидка (rolled=false).
       pushHistory(before);
@@ -339,7 +356,7 @@ export function useGame(): GameApi {
       pushHistory(current);
       setState(outcome.state);
       setEvents(outcome.events);
-      flashDeltas(outcome.deltas);
+      flashDeltas(outcome.deltas, outcome.events);
       sound.coin();
       haptic('medium');
       setToast('🔁 Обмін виконано!');
@@ -427,6 +444,7 @@ export function useGame(): GameApi {
     events,
     deltas,
     deltaKey,
+    savedGuard,
     toast,
     trades,
     tradesDone: state?.trades ?? 0,

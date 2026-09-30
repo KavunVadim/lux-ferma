@@ -12,6 +12,8 @@ interface FarmPanelProps {
   deltas: Partial<Record<HerdKey, number>>;
   /** Змінюється раз на хід, щоб анімації перегралися. */
   deltaKey: number;
+  /** Пес, який цього ходу відігнав хижака — для нього окрема анімація. */
+  savedGuard?: HerdKey | null;
   className?: string;
   /** Клас для сітки дворів — на мобільному вона скролиться, а шапка лишається. */
   bodyClassName?: string;
@@ -60,23 +62,36 @@ interface PenProps {
   herd: Herd;
   deltas: Partial<Record<HerdKey, number>>;
   deltaKey: number;
+  /**
+   * Вид, який цього ходу відігнав хижака. Потрібен, щоб пес отримав власну
+   * анімацію: у нього дельта −1 (повернувся в стадо), і без цього він
+   * виглядав би як втрата, хоча насправді він урятував двір.
+   */
+  savedGuard?: HerdKey | null;
 }
 
 /** Одна плитка двору. */
-function Pen({ species, farm, herd, deltas, deltaKey }: PenProps) {
+function Pen({ species, farm, herd, deltas, deltaKey, savedGuard }: PenProps) {
   const meta = ANIMALS[species];
   const count = farm[species];
   const delta = deltas[species] ?? 0;
   const shown = Math.min(count, PEN_TOKEN_CAP);
   const isDog = species === 'sdog' || species === 'bdog';
   const empty = count === 0;
+  const saved = savedGuard === species;
 
   return (
     <article
       key={`${species}-${deltaKey}`}
       /* data-tier задає розмір плитки в CSS — крок драбини цінності. */
       data-tier={PEN_TIER[species]}
-      className={cn(styles.pen, !empty && styles.filled, delta > 0 && styles.gain, delta < 0 && styles.loss)}
+      className={cn(
+        styles.pen,
+        !empty && styles.filled,
+        delta > 0 && styles.gain,
+        delta < 0 && !saved && styles.loss,
+        saved && styles.saved,
+      )}
     >
       <span className={cn(styles.signIconWrap, empty && styles.signIconIdle)}>
         <Sprite src={ANIMAL_SPRITES[species]} emoji={meta.emoji} className={styles.signIcon} />
@@ -128,7 +143,15 @@ function Pen({ species, farm, herd, deltas, deltaKey }: PenProps) {
  * Плитка: іконка ліворуч; праворуч назва, під нею «×N 🧺M». Назва має flex: 1
  * і за потреби переноситься — інакше довге «Вовкодав» обрізалось.
  */
-export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassName }: FarmPanelProps) {
+export function FarmPanel({
+  farm,
+  herd,
+  deltas,
+  deltaKey,
+  savedGuard,
+  className,
+  bodyClassName,
+}: FarmPanelProps) {
   const done = speciesDone(farm);
   // Корова замикає драбину (остання у SPECIES) — беремо її з того самого
   // списку, а не константою, щоб зміна балансу не ламала розмітку.
@@ -165,13 +188,31 @@ export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassNa
             herd={herd}
             deltas={deltas}
             deltaKey={deltaKey}
+            savedGuard={savedGuard}
           />
         ))}
 
-        {/* 2. Корова — сама в рядку по центру: найбільша й найцінніша. */}
-        <Pen species={cow} farm={farm} herd={herd} deltas={deltas} deltaKey={deltaKey} />
+        {/* 2. Корова — сама в рядку: найбільша й найцінніша, замикає драбину. */}
+        <Pen
+          species={cow}
+          farm={farm}
+          herd={herd}
+          deltas={deltas}
+          deltaKey={deltaKey}
+          savedGuard={savedGuard}
+        />
 
-        {/* 3. Охорона — теж у сітці, але найщільніша: це не вид перемоги. */}
+        {/*
+         * 3. Охорона — під пунктирною лінією з підписом.
+         *
+         * Собаки не входять у набір перемоги (потрібні п'ять видів), тож без
+         * цього відділення вони читаються як «шостий і сьомий вид». Лінія й
+         * підпис кажуть: це захист, а не мета.
+         */}
+        <div className={styles.guardDivider}>
+          <span className={styles.guardLabel}>🛡 Охорона двору</span>
+        </div>
+
         {DOGS.map((dog) => (
           <Pen
             key={dog}
@@ -180,6 +221,7 @@ export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassNa
             herd={herd}
             deltas={deltas}
             deltaKey={deltaKey}
+            savedGuard={savedGuard}
           />
         ))}
       </div>

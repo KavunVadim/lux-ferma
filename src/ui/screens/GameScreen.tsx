@@ -203,6 +203,7 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
               herd={state.herd}
               deltas={game.deltas}
               deltaKey={game.deltaKey}
+              savedGuard={game.savedGuard}
             />
 
           </div>
