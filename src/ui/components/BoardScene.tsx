@@ -4,7 +4,7 @@ import type { DecorPlacement, ZoneLayout } from '../../game/config';
 import type { GameEvent, GameState, HerdKey } from '../../game/types';
 import { cn } from '../../lib/cn';
 import { motionFor } from '../lib/motion';
-import { RaidRun, raidVictims } from './RaidRun';
+import { RaidRun } from './RaidRun';
 import { Sprite } from './Sprite';
 import { WalkToken } from './WalkToken';
 import styles from './BoardScene.module.css';
@@ -55,11 +55,20 @@ export function BoardScene({
    * і показуємо маршрут лише тоді, коли є що красти: інакше хижак бігав би
    * по порожніх дворах, що виглядає як помилка.
    */
+  /*
+   * НАБІГ ПОКАЗУЄМО ЗА ПОДІЄЮ, а не за станом двору.
+   *
+   * Було: умова вимагала, щоб у дворі ЗАРАЗ була жертва або щоб `delta ≠ 0`.
+   * Але `farm` — це стан ПІСЛЯ ходу: качку вже вкрали, тож `farm.duck = 0`,
+   * і набіг не показувався саме тоді, коли він найпотрібніший — коли крадіжка
+   * сталася. Сама подія `loss` із `raider` уже доводить, що хижак напав і
+   * щось забрав, тож цього достатньо.
+   *
+   * `kind: 'raid'` — окремий випадок «забирав, але нічого не було»: там
+   * хижак теж пробігає, показуючи, що загроза була.
+   */
   const raidEvent = events.find(
-    (item) =>
-      item.raider &&
-      (item.kind === 'loss' || item.kind === 'raid') &&
-      raidVictims(item.raider).some((key) => (farm?.[key] ?? 0) > 0 || (item.delta ?? 0) !== 0),
+    (item) => item.raider && (item.kind === 'loss' || item.kind === 'raid'),
   );
 
   return (

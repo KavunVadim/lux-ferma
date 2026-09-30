@@ -94,6 +94,11 @@
   align-content: stretch;
   gap: 8px;
   min-height: 0;
+  /*
+   * Точка відліку для шару набігу: його координати рахуються у відсотках
+   * САМЕ від цієї сітки (useRaidTargets міряє плитки відносно неї).
+   */
+  position: relative;
 }
 
 /*

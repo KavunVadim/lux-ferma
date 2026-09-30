@@ -17,6 +17,13 @@ interface FarmPanelProps {
   className?: string;
   /** Клас для сітки дворів — на мобільному вона скролиться, а шапка лишається. */
   bodyClassName?: string;
+  /**
+   * Шар набігу хижака (телефон). Передаємо САМЕ СЮДИ, а не кладемо поруч із
+   * панеллю: маршрут рахується у відсотках від сітки дворів, тож шар має
+   * лежати всередині неї. Інакше відсотки беруться від більшого контейнера
+   * й хижак біжить поза екраном.
+   */
+  raid?: React.ReactNode;
 }
 
 /** Скільки видів зібрано (0..5) — це і є прогрес до перемоги. */
@@ -85,6 +92,12 @@ function Pen({ species, farm, herd, deltas, deltaKey, savedGuard }: PenProps) {
       key={`${species}-${deltaKey}`}
       /* data-tier задає розмір плитки в CSS — крок драбини цінності. */
       data-tier={PEN_TIER[species]}
+      /*
+       * data-victim — щоб набіг хижака (телефон) знав, ДО ЯКОЇ плитки бігти:
+       * маршрут міряє реальну позицію в DOM (сітка адаптивна, координати
+       * залежать від рендера, а не від сталих відсотків).
+       */
+      data-victim={species}
       className={cn(
         styles.pen,
         !empty && styles.filled,
@@ -149,6 +162,7 @@ export function FarmPanel({
   deltas,
   deltaKey,
   savedGuard,
+  raid,
   className,
   bodyClassName,
 }: FarmPanelProps) {
@@ -179,6 +193,8 @@ export function FarmPanel({
       </div>
 
       <div className={cn(styles.pens, bodyClassName)}>
+        {/* Шар набігу — перший, щоб лежати ПІД плитками (z-index у стилях). */}
+        {raid}
         {/* 1. Молодші види парами: спершу качки/кози, далі свині/коні. */}
         {young.map((species) => (
           <Pen

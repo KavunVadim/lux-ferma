@@ -1,8 +1,9 @@
-import { PREDATOR_SPRITES } from '../../assets/manifest';
-import { PREDATORS, ZONES } from '../../game/config';
-import type { GameEvent, HerdKey } from '../../game/types';
+import { WALK_SHEETS } from '../../assets/walk';
+import { PREDATORS } from '../../game/config';
+import type { GameEvent } from '../../game/types';
 import { cn } from '../../lib/cn';
-import { Sprite } from './Sprite';
+import { WalkToken } from './WalkToken';
+import { raidPath, raidWalkVars } from './raidLogic';
 import styles from './BoardScene.module.css';
 
 interface RaidRunProps {
@@ -13,52 +14,35 @@ interface RaidRunProps {
 }
 
 /**
- * МАРШРУТ НАБІГУ — хижак обходить СВОЇ жертви по черзі.
+ * ХИЖАК БІЖИТЬ ПОЛЕМ (ПК): вбігає, обходить свої жертви по черзі, тікає.
  *
- * Лисиця краде качок і кіз, ведмідь — свиней і коней. Тому вона має пройти
- * саме цими дворами: спершу перший, потім другий, і лише тоді тікати.
+ * Це шар усередині КАРТИ, тож він існує лише в гілці `wide`. На телефоні
+ * карти немає — там сітка дворів, і для неї є `MobileRaid` нижче.
  *
- * Координати беруться з ZONES (та сама розкладка, що для загонів), тож
- * маршрут автоматично збігається з картою — за переносу загону в редакторі
- * нічого правити не треба.
- */
-function raidPath(raider: 'fox' | 'bear'): { x: number; y: number }[] {
-  const stops = PREDATORS[raider].steals.map((key) => {
-    const zone = ZONES[key];
-    // Точка зупинки — центр загону: там хижак «стоїть над» тваринами.
-    return { x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 };
-  });
-  // Втеча: за правий край карти, за межі поля (там ліс).
-  return [...stops, { x: -12, y: stops[0]?.y ?? 20 }];
-}
-
-/**
- * Хижак на полі: вбігає, обходить свої жертви по черзі, тікає вліво.
- *
- * Раніше хижак малювався ВСЕРЕДИНІ загону й там смикався — гравець бачив
- * лише, як щось блимнуло над одним двором, і не розумів, кого саме
- * вкрали. Тепер це окремий шар сцени: видно весь маршрут.
- *
- * Показуємо ЛИШЕ коли є що красти (`steals` перетинається з наявними
- * тваринами) — інакше лисиця бігала б по порожніх дворах.
+ * Ключове: хижак БІЖИТЬ анімацією ходи, а не їде статичною картинкою.
+ * Було `<Sprite>` плюс keyframes на батькові — виглядало як картинка, що
+ * пересувається екраном. Тепер `WalkToken` програє стрічку кадрів
+ * (`assets/walk/fox.webp` і `bear.webp`, по 6 кадрів) — ті самі спрайти, що
+ * в тварин у загонах, тож набіг виглядає частиною світу.
  */
 export function RaidRun({ event, deltaKey }: RaidRunProps) {
   const raider = event.raider;
   if (!raider) return null;
 
-  const path = raidPath(raider);
   const meta = PREDATORS[raider];
-  // CSS-змінні з координатами: keyframes читають їх, тож маршрут живе в
-  // одному місці — у ZONES, а не дублюється в стилях.
-  const start = path[0]!;
-  const vars: Record<string, string> = {
-    '--stop-a-x': `${start.x}%`,
-    '--stop-a-y': `${start.y}%`,
-  };
-  path.forEach((point, index) => {
+  /*
+   * CSS-змінні з координатами зупинок: keyframes читають їх, тож маршрут
+   * живе в одному місці — у `ZONES`, а не дублюється в стилях.
+   * `--stop-0` — перша жертва, `--stop-1` — друга.
+   */
+  const vars: Record<string, string> = {};
+  raidPath(raider).forEach((point, index) => {
     vars[`--stop-${index}-x`] = `${point.x}%`;
     vars[`--stop-${index}-y`] = `${point.y}%`;
   });
+
+  // Якщо стрічки кадрів немає — `WalkToken` покаже статичний спрайт.
+  const walkVars = WALK_SHEETS[raider] ? raidWalkVars() : {};
 
   return (
     <span
@@ -67,18 +51,48 @@ export function RaidRun({ event, deltaKey }: RaidRunProps) {
       style={vars as React.CSSProperties}
       aria-hidden
     >
-      <Sprite
-        src={PREDATOR_SPRITES[raider]}
+      <WalkToken
+        species={raider}
         emoji={meta.emoji}
-        alt={meta.label}
         className={styles.raidRunSprite}
+        vars={walkVars}
       />
     </span>
   );
 }
 
-/** Які види краде цей хижак — щоб вирішити, чи показувати набіг узагалі. */
-export function raidVictims(raider: 'fox' | 'bear'): readonly HerdKey[] {
-  return PREDATORS[raider].steals;
-}
+/**
+ * НАБІГ НА ТЕЛЕФОНІ.
+ *
+ * Ось де був корінь проблеми: `RaidRun` рендерився ТІЛЬКИ в гілці `wide`
+ * (усередині карти). На телефоні карти немає — там сітка дворів, тож набіг
+ * не з'являвся ВЗАГАЛІ. Не «не анімований» — його просто не було.
+ *
+ * На мобільному маршрут по відсотках карти незастосовний, тому хижак
+ * пробігає по СІТЦІ: з'являється біля першої жертви, переходить до другої,
+ * тікає. Координати зупинок рахує `useRaidTargets` у GameScreen — він міряє
+ * РЕАЛЬНІ плитки в DOM (сітка адаптивна, вгадувати не можна).
+ */
+export function MobileRaid({
+  event,
+  deltaKey,
+}: {
+  event: GameEvent;
+  deltaKey: number;
+}) {
+  const raider = event.raider;
+  if (!raider) return null;
 
+  const meta = PREDATORS[raider];
+  const walkVars = WALK_SHEETS[raider] ? raidWalkVars() : {};
+
+  return (
+    <span
+      key={`${raider}-${deltaKey}`}
+      className={cn(styles.mobileRaid, styles[`mobileRaid--${raider}`])}
+      aria-hidden
+    >
+      <WalkToken species={raider} emoji={meta.emoji} className={styles.mobileRaidSprite} vars={walkVars} />
+    </span>
+  );
+}

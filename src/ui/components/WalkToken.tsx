@@ -1,13 +1,15 @@
-import { ANIMAL_SPRITES, assetUrl } from '../../assets/manifest';
+import { ANIMAL_SPRITES, PREDATOR_SPRITES, assetUrl } from '../../assets/manifest';
 import { useAssets } from '../../assets/useAssets';
 import { WALK_SHEETS } from '../../assets/walk';
-import type { HerdKey } from '../../game/types';
+// WalkKey = HerdKey | 'fox' | 'bear': стрічки ходи є і для хижаків, тож
+// компонент має приймати їх теж (набіг показує біжучого звіра).
+import type { WalkKey } from '../../assets/walk';
 import { cn } from '../../lib/cn';
 import { Sprite } from './Sprite';
 import styles from './BoardScene.module.css';
 
 interface WalkTokenProps {
-  species: HerdKey;
+  species: WalkKey;
   emoji: string;
   /** CSS-змінні руху (темп, фаза, напрямок) з motionFor(). */
   vars: Record<string, string>;
@@ -35,7 +37,15 @@ export function WalkToken({ species, emoji, vars, className, staticSprite }: Wal
   const ready = !!sheet && !!url && available[url] === true;
 
   if (!sheet || !ready) {
-    return <Sprite src={ANIMAL_SPRITES[species]} emoji={emoji} alt="" className={className} style={vars} />;
+    /*
+     * Фолбек — статичний спрайт. Хижаки лежать в іншій мапі, ніж тварини
+     * двору: `fox`/`bear` не є видами стада, тож шукаємо в обох.
+     */
+    const fallback =
+      species === 'fox' || species === 'bear'
+        ? PREDATOR_SPRITES[species]
+        : ANIMAL_SPRITES[species];
+    return <Sprite src={fallback} emoji={emoji} alt="" className={className} style={vars} />;
   }
 
   return (
