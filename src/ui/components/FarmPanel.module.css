@@ -188,9 +188,10 @@
   overflow: hidden;
   color: var(--ink);
   font-family: var(--font-display);
-  /* 0.94rem: «Свинарник» (9 символів) — найдовша назва, і за 1rem вона
-     різалась. Плитка ~165px, тож ширина підбиралась саме під неї. */
-  font-size: 0.94rem;
+  /* clamp: «Свинарник» і «Велика будка» — найдовші назви. Замість різати їх
+     в «Велика б···», дозволяємо шрифту стиснутись до 0.78rem — назва
+     читається повністю на будь-якій плитці. */
+  font-size: clamp(0.78rem, 3.4vw, 0.94rem);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -242,8 +243,11 @@
 }
 
 .herd {
-  color: var(--ink-soft);
-  font-size: 0.7rem;
+  /* 0.9rem і --ink, а не --ink-soft: контраст у --ink-soft формально 8.18,
+     але за 0.7rem число стада губилось поруч із жирним ×N. Проблема була не
+     в кольорі, а в розмірі. */
+  color: var(--ink);
+  font-size: 0.9rem;
   font-weight: 800;
   white-space: nowrap;
 }

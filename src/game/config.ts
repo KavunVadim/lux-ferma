@@ -36,8 +36,11 @@ export const ANIMALS: Record<HerdKey, AnimalMeta> = {
   pig: { key: 'pig', emoji: '🐖', label: 'Свиня', plural: 'свині', house: 'Свинарник', sprite: 'assets/animals/pig.webp' },
   horse: { key: 'horse', emoji: '🐎', label: 'Кінь', plural: 'коні', house: 'Стайня', sprite: 'assets/animals/horse.webp' },
   cow: { key: 'cow', emoji: '🐄', label: 'Корова', plural: 'корови', house: 'Коровник', sprite: 'assets/animals/cow.webp' },
-  sdog: { key: 'sdog', emoji: '🐕', label: 'Малий пес', plural: 'песи', house: 'Мала будка', sprite: 'assets/animals/sdog.webp' },
-  bdog: { key: 'bdog', emoji: '🐕‍🦺', label: 'Великий пес', plural: 'песи', house: 'Велика будка', sprite: 'assets/animals/bdog.webp' },
+  // «Мала будка» / «Велика будка» не влазили в плитку 165px поруч із
+  // лічильником — назва різалась у «Велика буд···». «Пес» і «Вовкодав»
+  // коротші, але одразу кажуть, хто це і хто з них сильніший.
+  sdog: { key: 'sdog', emoji: '🐕', label: 'Малий пес', plural: 'песи', house: 'Пес', sprite: 'assets/animals/sdog.webp' },
+  bdog: { key: 'bdog', emoji: '🐕‍🦺', label: 'Великий пес', plural: 'песи', house: 'Вовкодав', sprite: 'assets/animals/bdog.webp' },
 };
 
 /** Спрайти будівель за видами. */
