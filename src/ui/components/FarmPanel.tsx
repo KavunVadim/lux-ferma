@@ -22,7 +22,7 @@ function speciesDone(farm: Farm): number {
   return SPECIES.filter((key) => farm[key] >= 1).length;
 }
 
-/** Коротка суть двору для рядка під назвою — щоб гравець розумів роль. */
+/** Коротка суть двору — пояснення ролі, видно лише на ПК (там є ширина). */
 const PEN_ROLE: Record<HerdKey, string> = {
   duck: 'найшвидше розмножуються',
   goat: 'тримають пару стабільно',
@@ -36,12 +36,15 @@ const PEN_ROLE: Record<HerdKey, string> = {
 /**
  * «Моя ферма»: сім дворів.
  *
- * Мобільний (базові стилі) — вертикальний список «свитками»: назва, лічильник
- * і роль двору в одному рядку. Шість-сім карток у сітці 3×2 давали дрібний
- * текст і шість разів «порожньо…», тоді як список дає місце під пояснення і
- * читається зверху вниз без блукання очима.
+ * Компоновка плитки на телефоні: іконка ліворуч, праворуч — назва, під нею
+ * одним рядком «×N 🧺M». Лічильник стоїть У ПОТОЦІ колонки під назвою.
  *
- * ПК — сітка карток зі спрайтами тварин (там місця вистачає).
+ * Чому саме так: у колонці ~165px бічний бейдж лічильника забирав близько
+ * половини ширини, і «Коровник» різався в «К…» — ні зменшення шрифту, ні
+ * padding це не лікували, бо ширини просто не лишалось. Під назвою ж
+ * лічильник має всю ширину плитки.
+ *
+ * ПК — картки зі спрайтами тварин у дворі й повним поясненням ролі.
  */
 export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassName }: FarmPanelProps) {
   const done = speciesDone(farm);
@@ -55,8 +58,6 @@ export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassNa
         </span>
       </header>
 
-      {/* Смужка прогресу: головна мета гри — зібрати п'ять видів. Раніше це
-          доводилось рахувати очима по шести картках. */}
       <div
         className={styles.progress}
         role="progressbar"
@@ -75,32 +76,37 @@ export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassNa
           const delta = deltas[key] ?? 0;
           const shown = Math.min(count, PEN_TOKEN_CAP);
           const isDog = key === 'sdog' || key === 'bdog';
+          const empty = count === 0;
 
           return (
             <article
               key={`${key}-${deltaKey}`}
               className={cn(
                 styles.pen,
-                count > 0 && styles.filled,
+                !empty && styles.filled,
                 delta > 0 && styles.gain,
                 delta < 0 && styles.loss,
               )}
             >
-              <span className={cn(styles.signIconWrap, count === 0 && styles.signIconIdle)}>
+              <span className={cn(styles.signIconWrap, empty && styles.signIconIdle)}>
                 <Sprite src={ANIMAL_SPRITES[key]} emoji={meta.emoji} className={styles.signIcon} />
               </span>
 
               <span className={styles.info}>
                 <b className={styles.house}>{meta.house}</b>
                 <span className={styles.role}>
-                  {count === 0 ? PEN_ROLE[key] : `${count} у дворі · ${PEN_ROLE[key]}`}
+                  {empty ? 'порожньо' : `${count} у дворі`}
+                  <span className={styles.roleLong}> · {PEN_ROLE[key]}</span>
+                </span>
+                <span className={styles.meta}>
+                  <b className={cn(styles.count, !empty && !isDog && styles.countDone)}>×{count}</b>
+                  <span className={styles.herd}>🧺{herd[key]}</span>
                 </span>
               </span>
 
-              {/* Спрайт-«розсип» у дворі лишаємо лише там, де є місце (ПК),
-                  на мобільному лічильник замінює його. */}
+              {/* Спрайт-«розсип» у дворі — лише на ПК, де під це є місце. */}
               <span className={styles.yard} aria-hidden>
-                {count > 0 &&
+                {!empty &&
                   Array.from({ length: shown }, (_, index) => (
                     <Sprite
                       key={index}
@@ -110,11 +116,6 @@ export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassNa
                     />
                   ))}
                 {count > shown && <span className={styles.more}>+{count - shown}</span>}
-              </span>
-
-              <span className={styles.countGroup}>
-                <b className={cn(styles.count, count > 0 && !isDog && styles.countDone)}>×{count}</b>
-                <span className={styles.herd}>🧺 {herd[key]}</span>
               </span>
 
               {delta !== 0 && (

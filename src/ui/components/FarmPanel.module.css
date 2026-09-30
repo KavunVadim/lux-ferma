@@ -1,17 +1,22 @@
 /*
- * «Моя ферма».
+ * «Моя ферма» — сітка дворів.
  *
- * Мобільний (базові стилі) — вертикальний список рядків: спрайт, назва з
- * роллю, лічильник і залишок стада. Раніше тут була сітка 3×2, де назва
- * двору не вміщалась (її ховали зовсім) і шість разів повторювалось
- * «порожньо…». Список дає місце під пояснення ролі й читається згори вниз.
+ * Мобільний (базові стилі): дві колонки, плитки тягнуться рівномірно й
+ * заповнюють панель. Плитка = іконка + назва зі станом, лічильник бейджем
+ * у правому верхньому куті (у потоці рядка він з'їдав ширину, і «Коровник»
+ * різався в «К…»).
  *
- * ПК (`@media (min-width: 1000px)`) — повертаємо сітку карток зі спрайтами
- * тварин у дворі: там місця вистачає, і «живий» двір виглядає краще.
+ * ПК (`@media (min-width: 1000px)`): ширші картки зі спрайтами тварин у дворі
+ * і повним поясненням ролі.
+ *
+ * ПОРЯДОК ВАЖЛИВИЙ: спільні стилі → мобільні уточнення → ПК-перевизначення.
+ * Раніше .countGroup був оголошений тричі й .pen — чотири рази; пізніші
+ * правила перебивали потрібні, звідси і обрізані назви, і «гуляючі» проміжки.
  */
 
 .panel {
   display: flex;
+  flex: 1;
   flex-direction: column;
   min-height: 0;
   padding: 12px 12px 14px;
@@ -19,6 +24,7 @@
 
 .head {
   display: flex;
+  flex: none;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
@@ -59,12 +65,19 @@
   transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ── Список дворів ──────────────────────────────────────────────────────── */
+/* ── Сітка дворів ────────────────────────────────────────────────────────── */
 
+/*
+ * `flex: 1` + `grid-auto-rows: 1fr` дають дві речі одночасно: панель забирає
+ * всю вільну висоту (немає порожньої смуги знизу), а сім рядків ділять її
+ * РІВНОМІРНО — без «гуляючих» проміжків між плитками.
+ */
 .pens {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 6px;
   min-height: 0;
 }
 
@@ -73,8 +86,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 48px;
-  padding: 5px 9px;
+  min-height: 0;
+  padding: 8px 9px;
   border: 2px solid var(--line);
   border-radius: 15px;
   background: #fff8ea;
@@ -88,54 +101,13 @@
   background: #fffdf4;
 }
 
-/* Порожній двір: рамка тихіша й фон плаский — щоб заповнені двори читались
-   як «є», а порожні як «мета». Раніше рамка була однакова і різниці не видно. */
+/*
+ * Порожній двір: пунктирна рамка і приглушена ЛИШЕ іконка. Приглушувати весь
+ * рядок не можна — назви зливаються з фоном.
+ */
 .pen:not(.filled) {
   border-style: dashed;
   background: color-mix(in srgb, var(--cream) 70%, var(--cream-2));
-}
-
-.signIconWrap {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--gold) 18%, #fff);
-}
-
-/* Порожній двір приглушуємо — око одразу чіпляється за заповнені. */
-/*
- * Порожній двір: приглушуємо ЛИШЕ іконку. Раніше opacity 0.45 стояв на всьому
- * рядку, і назви дворів зливалися з фоном — список читався як «є тільки
- * качник». Тепер ієрархія тримається на іконці й кольорі лічильника.
- */
-.signIconIdle {
-  opacity: 0.4;
-  filter: grayscale(0.85);
-}
-
-.signIcon {
-  width: 30px;
-  height: 30px;
-}
-
-.info {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.2;
-}
-
-.house {
-  overflow: hidden;
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 0.9rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .pen:not(.filled) .house {
@@ -146,30 +118,84 @@
   color: color-mix(in srgb, var(--ink) 52%, var(--cream));
 }
 
+.signIconWrap {
+  display: grid;
+  flex: none;
+  place-items: center;
+  /* 44px: шість пікселів, віддані назві, — саме та різниця, за якої
+     «Свинарник» перестає різатись у колонці ~165px. */
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--gold) 18%, #fff);
+}
+
+.signIconIdle {
+  opacity: 0.4;
+  filter: grayscale(0.85);
+}
+
+.signIcon {
+  width: 40px;
+  height: 40px;
+}
+
+.info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.house {
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-display);
+  /* 0.94rem: «Свинарник» (9 символів) — найдовша назва, і за 1rem вона
+     різалась. Плитка ~165px, тож ширина підбиралась саме під неї. */
+  font-size: 0.94rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .role {
   overflow: hidden;
   color: color-mix(in srgb, var(--ink) 62%, var(--cream));
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.countGroup {
+/* Довге пояснення ролі ріжеться у вузькій колонці — показуємо лише на ПК. */
+.roleLong {
+  display: none;
+}
+
+/*
+ * Рядок «×N 🧺M» під назвою двору.
+ *
+ * Саме під назвою, а не бічним бейджем: у колонці ~165px бічний лічильник
+ * забирав половину ширини і назва різалась у «К…». Тут він має всю ширину
+ * плитки й нікому не заважає.
+ */
+.meta {
   display: flex;
-  flex: none;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1px;
 }
 
 .count {
-  padding: 1px 10px;
+  padding: 1px 8px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ink) 9%, transparent);
   color: var(--ink-soft);
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 800;
 }
 
@@ -180,16 +206,17 @@
 
 .herd {
   color: var(--ink-soft);
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
-/* На телефоні спрайти у дворі не дублюємо: лічильник праворуч уже все сказав. */
+/* На телефоні спрайти у дворі не дублюємо: лічильник уже все сказав. */
 .yard {
   display: none;
 }
 
-/* ── Анімації зміни: спалах і струс ─────────────────────────────────────── */
+/* ── Анімації зміни ──────────────────────────────────────────────────────── */
 
 .delta {
   position: absolute;
@@ -280,12 +307,12 @@
   }
 }
 
-/* ── ПК: сітка карток зі спрайтами у дворі ──────────────────────────────── */
+/* ── ПК: ширші картки зі спрайтами у дворі ──────────────────────────────── */
 
 @media (min-width: 1000px) {
   .pens {
-    display: grid;
     grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
+    grid-auto-rows: auto;
     align-content: start;
     gap: 8px;
   }
@@ -314,6 +341,7 @@
 
   .info {
     flex: none;
+    justify-content: flex-start;
     gap: 5px;
     padding: 4px 7px;
     border-bottom: 2px dashed var(--wood-light);
@@ -329,10 +357,14 @@
     display: none;
   }
 
+  .roleLong {
+    display: inline;
+  }
+
   .countGroup {
-    position: absolute;
     top: 3px;
     right: 6px;
+    gap: 0;
   }
 
   .count {
@@ -388,4 +420,16 @@
     right: 10px;
     bottom: 18px;
   }
+}
+
+/*
+ * Собаки — не «шостий і сьомий вид», а захист: вони стоять парою внизу й
+ * мають пунктирну рамку, поки порожні.
+ */
+.pen:nth-last-child(-n + 2) {
+  border-style: dashed;
+}
+
+.pen:nth-last-child(-n + 2).filled {
+  border-style: solid;
 }

@@ -7,7 +7,6 @@ import { cn } from '../../lib/cn';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { ActionBar } from '../components/ActionBar';
 import { BoardScene } from '../components/BoardScene';
-import { Dice } from '../components/Dice';
 import { EventFeed } from '../components/EventFeed';
 import { FarmPanel } from '../components/FarmPanel';
 import { PlayerRail } from '../components/PlayerRail';
@@ -67,36 +66,14 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
   const winner = state.winnerIndex !== null ? state.players[state.winnerIndex] : undefined;
   const winOpen = state.over && !game.result;
 
-  /**
-   * Кубики в HUD.
+  /*
+   * Кубиків у HUD немає взагалі.
    *
-   * Показуємо їх ЛИШЕ коли є що показувати: триває кидок або вже випав
-   * результат цього ходу. Порожні клітинки з «?» до кидка нічого не
-   * повідомляють і лише з'їдають третину мобільного екрана — замість них
-   * підказка до дії. Коли відкрита модалка результату, HUD ховаємо, щоб
-   * той самий кидок не дублювався двічі.
+   * Кидок показує модалка (вона крутить ті самі грані, і це видно на весь
+   * екран), результат гравець читає там же, а про передачу пристрою каже
+   * окремий екран. Будь-яка пара кубиків у HUD означала або дубль обертів
+   * позаду модалки, або те саме число, показане вдруге.
    */
-  const showDice = game.rolling || state.dice !== null || !!game.result;
-  const diceCard = showDice ? (
-    <div className={cn('card', styles.diceCard, game.result && styles.diceCardMuted)}>
-      <Dice
-        faces={(game.rolling || game.result) ? game.rollTarget : state.dice}
-        rolling={game.rolling}
-        labels
-        flickerPredators={game.settings.diceFlicker}
-      />
-      <p className={styles.ticker}>{game.rolling ? 'Кубики летять…' : state.message}</p>
-    </div>
-  ) : (
-    <div className={cn('card', styles.diceCard, styles.diceHint)}>
-      <span className={styles.hintIcon} aria-hidden>
-        🎲
-      </span>
-      <p className={styles.ticker}>
-        {state.rolled ? 'Хід зроблено — передай пристрій' : 'Кинь кубики, щоб почати хід'}
-      </p>
-    </div>
-  );
 
   return (
     <section className={cn(styles.shell, wide && styles.shellField, state.over && styles.finished)}>
@@ -216,9 +193,9 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
           />
 
           <div className={styles.left}>
+            {/* Хто ходить зараз: рейка з дробами N/5 + червона плашка ходу. */}
             <Scoreboard players={state.players} current={state.current} />
             <TurnBanner state={state} />
-            {diceCard}
 
             <FarmPanel
               bodyClassName={styles.farmBody}
@@ -227,6 +204,7 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
               deltas={game.deltas}
               deltaKey={game.deltaKey}
             />
+
           </div>
 
           <ActionBar

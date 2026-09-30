@@ -8,7 +8,13 @@ interface ScoreboardProps {
   current: number;
 }
 
-/** Смужка прогресу всіх гравців: скільки з п'яти видів уже вдома. */
+/**
+ * Смужка всіх гравців: аватар, ім'я і скільки з п'яти видів уже вдома.
+ *
+ * Раніше замість аватара стояла просто кольорова крапка — гравець не міг
+ * упізнати себе здалеку, хоч аватар (🧑‍🌾) у моделі є і використовується на
+ * екрані передачі пристрою.
+ */
 export function Scoreboard({ players, current }: ScoreboardProps) {
   return (
     <div className={styles.board}>
@@ -18,7 +24,13 @@ export function Scoreboard({ players, current }: ScoreboardProps) {
           className={cn(styles.pill, index === current && styles.active)}
           style={{ ['--player-color' as string]: player.color }}
         >
-          <span className="dot" style={{ background: player.color }} />
+          <span
+            className={styles.avatar}
+            style={{ background: `radial-gradient(circle at 35% 25%, #fff8e6, color-mix(in srgb, ${player.color} 34%, #fff3d6))` }}
+            aria-hidden
+          >
+            {player.avatar}
+          </span>
           <span className={styles.name}>{player.name}</span>
           <b className={styles.score}>{progress(player.farm)}/5</b>
         </div>
