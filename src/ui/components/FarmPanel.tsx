@@ -1,6 +1,5 @@
 import { ANIMAL_SPRITES } from '../../assets/manifest';
 import { ANIMALS, DOGS, PEN_TOKEN_CAP, SPECIES } from '../../game/config';
-import type { Species } from '../../game/types';
 import type { Farm, Herd, HerdKey } from '../../game/types';
 import { cn } from '../../lib/cn';
 import { Sprite } from './Sprite';
@@ -24,11 +23,25 @@ function speciesDone(farm: Farm): number {
 }
 
 /**
- * Корова замикає драбину обміну, тому йде не в сітку, а окремим рядком.
- * Беремо останній вид зі SPECIES, а не константу: порядок у SPECIES — це і є
- * порядок драбини, тож за зміни балансу цей код не доведеться чіпати.
+ * Драбина цінності: чим старша тварина, тим більша її плитка.
+ *
+ *   качки, кози → 1 (найкомпактніші: наймолодші, їх найбільше)
+ *   свині, коні  → 2 (середня ланка)
+ *   корова       → 3 (найбільша: замикає драбину й перемогу)
+ *   собаки       → 0 (захист, не вид — стоять найщільніше)
+ *
+ * Розмір тут не декор: телефон лежить на столі між гравцями, і око має
+ * одразу чіплятись за найважливіше — корову.
  */
-const COW: Species = SPECIES[SPECIES.length - 1]!;
+const PEN_TIER: Record<HerdKey, number> = {
+  duck: 1,
+  goat: 1,
+  pig: 2,
+  horse: 2,
+  cow: 3,
+  sdog: 0,
+  bdog: 0,
+};
 
 /** Коротка суть двору — пояснення ролі, видно лише на ПК (там є ширина). */
 const PEN_ROLE: Record<HerdKey, string> = {
@@ -49,7 +62,7 @@ interface PenProps {
   deltaKey: number;
 }
 
-/** Одна плитка двору. Виділена окремо, бо малюється у двох сітках. */
+/** Одна плитка двору. */
 function Pen({ species, farm, herd, deltas, deltaKey }: PenProps) {
   const meta = ANIMALS[species];
   const count = farm[species];
@@ -61,6 +74,8 @@ function Pen({ species, farm, herd, deltas, deltaKey }: PenProps) {
   return (
     <article
       key={`${species}-${deltaKey}`}
+      /* data-tier задає розмір плитки в CSS — крок драбини цінності. */
+      data-tier={PEN_TIER[species]}
       className={cn(styles.pen, !empty && styles.filled, delta > 0 && styles.gain, delta < 0 && styles.loss)}
     >
       <span className={cn(styles.signIconWrap, empty && styles.signIconIdle)}>
@@ -99,26 +114,26 @@ function Pen({ species, farm, herd, deltas, deltaKey }: PenProps) {
 }
 
 /**
- * «Моя ферма».
+ * «Моя ферма» — одна сітка дворів, що заповнює всю панель.
  *
- * Три зони замість однієї сітки з семи плиток:
- *  1) чотири МОЛОДШІ види — сітка в дві колонки;
- *  2) КОРОВА — окремо по центру: вона старша у драбині обміну й найцінніша
- *     (остання ланка до перемоги), тож не має губитись серед решти, як
- *     звичайний рядок сітки;
- *  3) два СОБАКИ — захист, а не вид: вони не входять у набір перемоги.
+ * Порядок = драбина цінності, згори вниз:
+ *   качки, кози (найкомпактніші) → свині, коні (більші) →
+ *   корова (найбільша, окремим рядком по центру) → собаки (найщільніші).
  *
- * Раніше всі сім плиток лежали в одній сітці, і ні корова, ні собаки не
- * вирізнялись — собаки ще й виглядали як «шостий і сьомий вид».
+ * Одна сітка на всі рядки, а не три окремі блоки: раніше корова й собаки
+ * були власними блоками з нерівними відступами, і саме між ними лишалась
+ * порожня площа. Тут сітка тягне всю висоту панелі й ділить її між рядками,
+ * тож пустот не лишається.
  *
- * Плитка на телефоні: іконка ліворуч; праворуч назва, під нею «×N 🧺M».
- * Лічильник має стояти під назвою, а не бічним бейджем: у колонці ~165px
- * бічний бейдж забирав половину ширини, і назва різалась.
+ * Плитка: іконка ліворуч; праворуч назва, під нею «×N 🧺M». Назва має flex: 1
+ * і за потреби переноситься — інакше довге «Вовкодав» обрізалось.
  */
 export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassName }: FarmPanelProps) {
   const done = speciesDone(farm);
-  // Корова окремо: вона замикає драбину, тож має власний рядок по центру.
-  const young = SPECIES.filter((species) => species !== COW);
+  // Корова замикає драбину (остання у SPECIES) — беремо її з того самого
+  // списку, а не константою, щоб зміна балансу не ламала розмітку.
+  const cow = SPECIES[SPECIES.length - 1]!;
+  const young = SPECIES.filter((species) => species !== cow);
 
   return (
     <section className={cn('card', styles.panel, className)} aria-label="Моя ферма">
@@ -140,8 +155,8 @@ export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassNa
         <i className={styles.progressFill} style={{ width: `${(done / SPECIES.length) * 100}%` }} />
       </div>
 
-      {/* 1. Молодші види. */}
       <div className={cn(styles.pens, bodyClassName)}>
+        {/* 1. Молодші види парами: спершу качки/кози, далі свині/коні. */}
         {young.map((species) => (
           <Pen
             key={species}
@@ -152,28 +167,21 @@ export function FarmPanel({ farm, herd, deltas, deltaKey, className, bodyClassNa
             deltaKey={deltaKey}
           />
         ))}
-      </div>
 
-      {/* 2. Корова — по центру, окремим рядком: найцінніша тварина ферми. */}
-      <div className={styles.cowRow}>
-        <Pen species={COW} farm={farm} herd={herd} deltas={deltas} deltaKey={deltaKey} />
-      </div>
+        {/* 2. Корова — сама в рядку по центру: найбільша й найцінніша. */}
+        <Pen species={cow} farm={farm} herd={herd} deltas={deltas} deltaKey={deltaKey} />
 
-      {/* 3. Охорона — окремо: собаки не дають перемоги, вони захищають двір. */}
-      <div className={styles.guard}>
-        <span className={styles.guardLabel}>🛡 Охорона двору</span>
-        <div className={styles.guardRow}>
-          {DOGS.map((dog) => (
-            <Pen
-              key={dog}
-              species={dog}
-              farm={farm}
-              herd={herd}
-              deltas={deltas}
-              deltaKey={deltaKey}
-            />
-          ))}
-        </div>
+        {/* 3. Охорона — теж у сітці, але найщільніша: це не вид перемоги. */}
+        {DOGS.map((dog) => (
+          <Pen
+            key={dog}
+            species={dog}
+            farm={farm}
+            herd={herd}
+            deltas={deltas}
+            deltaKey={deltaKey}
+          />
+        ))}
       </div>
     </section>
   );

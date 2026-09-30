@@ -74,6 +74,22 @@
  * між трьома рядками рівномірно — без порожньої смуги знизу і без
  * «гуляючих» проміжків.
  */
+/*
+ * СІТКА ДВОРІВ — розміри за драбиною цінності.
+ *
+ * Плитка не однакова для всіх: що старша тварина в драбині обміну, то вища
+ * її плитка. Це не декор — за одним столом телефон лежить між гравцями, і
+ * око має одразу чіплятись за найважливіше (корова замикає перемогу).
+ *
+ *   качки, кози   ×1.00  — наймолодші, їх багато, тому найкомпактніші
+ *   свині, коні    ×1.16  — середня ланка
+ *   корова         ×1.34  — найбільша, окремим рядком по центру
+ *
+ * `grid-auto-rows: 1fr` + `flex: 1`: сітка забирає ВСЮ вільну висоту панелі
+ * й ділить її між рядками, тож порожніх смуг не лишається. Раніше стояло
+ * `flex: 1` лише на сітці з чотирьох плиток, а корова й собаки були
+ * окремими блоками — саме звідси бралась пустота між ними.
+ */
 .pens {
   display: grid;
   flex: 1;
@@ -84,66 +100,65 @@
 }
 
 /*
- * КОООВА — окремим рядком по центру під сіткою.
+ * Кроки драбини цінності.
  *
- * Корова замикає драбину обміну й остання потрібна для перемоги, тож вона
- * не має губитись як звичайний рядок сітки. Ширина — як у двох плиток
- * (тобто як у сітки цілком), щоб рядок не виглядав «обрізаним».
+ * Що старша тварина, то більша плитка: качки/кози (base) → свині/коні
+ * (іконка 66px, назва 1.16rem) → корова (іконка 72px, назва 1.3rem, на всю
+ * ширину сітки). Собаки — найщільніші, бо це захист, а не вид перемоги.
  */
-.cowRow {
-  display: flex;
-  flex: none;
-  justify-content: center;
-  margin-top: 6px;
+.pen[data-tier='2'] .signIconWrap {
+  width: 62px;
+  height: 62px;
 }
 
-.cowRow .pen {
-  /* Ширина як у плитки сітки (половина мінус половина зазору), по центру:
-     розтягнута на всю ширину корова виглядала як інший тип елемента, а не
-     як така сама плитка, тільки виділена. */
-  width: calc(50% - 3px);
-  min-height: 62px;
-  border-width: 3px;
-  border-color: var(--gold-dark);
-  background: var(--card);
+.pen[data-tier='2'] .signIcon {
+  width: 56px;
+  height: 56px;
 }
 
-/* На ПК корова повертається у спільну сітку — там місця вдосталь. */
-@media (min-width: 1000px) {
-  .cowRow {
-    display: none;
-  }
+.pen[data-tier='2'] .house {
+  font-size: 1.16rem;
 }
 
-/*
- * Охорона двору — окремий блок під сіткою видів.
- *
- * Собаки не входять у набір перемоги (потрібні п'ять видів), тож в одній
- * сітці з ними вони виглядали як «шостий і сьомий вид». Тут вони стоять
- * парою під підписом — видно, що це захист, а не мета.
- */
-.guard {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 7px;
-  padding-top: 7px;
-  border-top: 2px dashed color-mix(in srgb, var(--ink) 16%, transparent);
+/* Корова: найбільша плитка і єдина, що займає обидві колонки. */
+.pen[data-tier='3'] {
+  grid-column: 1 / -1;
 }
 
-.guardLabel {
-  color: var(--ink-soft);
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.03em;
+.pen[data-tier='3'] .signIconWrap {
+  width: 76px;
+  height: 76px;
 }
 
-.guardRow {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+.pen[data-tier='3'] .signIcon {
+  width: 70px;
+  height: 70px;
 }
+
+.pen[data-tier='3'] .house {
+  font-size: 1.3rem;
+}
+
+.pen[data-tier='3'] .count,
+.pen[data-tier='3'] .herd {
+  font-size: 1.1rem;
+}
+
+/* Собаки: найщільніші, бо це захист, а не вид перемоги. */
+.pen[data-tier='0'] .signIconWrap {
+  width: 46px;
+  height: 46px;
+}
+
+.pen[data-tier='0'] .signIcon {
+  width: 41px;
+  height: 41px;
+}
+
+.pen[data-tier='0'] .house {
+  font-size: 1rem;
+}
+
 
 .pen {
   position: relative;
@@ -168,31 +183,35 @@
 }
 
 /*
- * Порожній двір: пунктирна рамка і приглушена ЛИШЕ іконка. Приглушувати весь
- * рядок не можна — назви зливаються з фоном.
+ * Порожній двір: пунктирна рамка і приглушена ЛИШЕ іконка.
+ *
+ * Приглушувати ТЕКСТ не можна: підпис «порожньо» через
+ * color-mix(ink 52%, cream) давав 3.19 при нормі WCAG 4.5 — саме він і
+ * виглядав «вимкненим». Тьмяність тепер несе рамка (пунктир + блідіше тло),
+ * а текст лишається читабельним.
  */
 .pen:not(.filled) {
   border-style: dashed;
-  background: color-mix(in srgb, var(--cream) 55%, var(--cream-2));
+  background: color-mix(in srgb, var(--cream) 40%, var(--card));
 }
 
 .pen:not(.filled) .house {
-  color: color-mix(in srgb, var(--ink) 82%, var(--cream));
+  color: color-mix(in srgb, var(--ink) 88%, var(--card));
 }
 
 .pen:not(.filled) .role {
-  color: color-mix(in srgb, var(--ink) 52%, var(--cream));
+  color: color-mix(in srgb, var(--ink) 68%, var(--card));
 }
 
 .signIconWrap {
   display: grid;
   flex: none;
   place-items: center;
-  /* 52px: назви тварин тепер короткі («Свині», «Коні»), тож місце є —
-     більша іконка читається здалеку за столом. */
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  /* 60px: тварину треба впізнавати здалеку — телефон лежить на столі між
+     гравцями. Назви короткі («Свині», «Коні»), тож місце є. */
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
   background: color-mix(in srgb, var(--gold) 18%, var(--card));
 }
 
@@ -202,8 +221,8 @@
 }
 
 .signIcon {
-  width: 47px;
-  height: 47px;
+  width: 54px;
+  height: 54px;
 }
 
 .info {
@@ -212,29 +231,41 @@
   flex-direction: column;
   justify-content: center;
   gap: 1px;
+  /* min-width: 0 — без цього flex-елемент не стискається нижче вмісту, і
+     довга назва чи числа вилазять за плитку замість переносу. */
   min-width: 0;
+  /* Числа мають підлаштовуватись під решту ширини, а не задавати її. */
+  overflow: hidden;
   line-height: 1.15;
 }
 
+/*
+ * НАЗВА ДВОРУ.
+ *
+ * «Вовкодав» різався чотири рази поспіль, і кожен раз причина була одна:
+ * я додавав ширину іконці або бейджам, і назві лишалось 80–90px. clamp тут
+ * не рятує (задає розмір, але не стискає текст), а менший кегль робить
+ * назву нечитабельною.
+ *
+ * Рішення: назва має flex: 1 (забирає все, що лишилось) і переноситься на
+ * другий рядок замість обрізання. Дворова плитка вища за ширину, тож два
+ * рядки вміщаються без шкоди.
+ */
 .house {
-  overflow: hidden;
   color: var(--ink);
   font-family: var(--font-display);
-  /*
-   * clamp ЗДЕСВ НЕ ПРАЦЮЄ: він задає розмір шрифту, але не стискає текст —
-   * «Вовкодав» усе одно різався, бо 8 символів при 1.15rem не влазять у
-   * ~100px, що лишаються від колонки 165px після іконки 52px і відступів.
-   * Тому просто менший кегль: назви короткі, читаються добре, а довге
-   * «Вовкодав» вміщається.
-   */
-  font-size: 1.02rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 1.05rem;
+  line-height: 1.05;
+  /* Довге слово («Вовкодав») переносимо по літерах, а не обрізаємо. */
+  hyphens: auto;
+  overflow-wrap: anywhere;
 }
 
 .role {
   overflow: hidden;
-  color: color-mix(in srgb, var(--ink) 62%, var(--cream));
+  /* 72%, а не 62%: на вохристому тлі порожнього двору 62% давало замало —
+     підпис «порожньо» читався як вимкнений. */
+  color: color-mix(in srgb, var(--ink) 72%, var(--card));
   font-size: 0.74rem;
   font-weight: 700;
   text-overflow: ellipsis;
@@ -256,7 +287,10 @@
 .meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  /* Дозволяємо числам переноситись: за великої іконки (драбина цінності)
+     пара «×N 🧺M» не вміщалась у рядок і число стада обрізалось справа. */
+  flex-wrap: wrap;
+  gap: 4px 6px;
   margin-top: 1px;
 }
 
