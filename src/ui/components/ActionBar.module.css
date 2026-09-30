@@ -1,8 +1,15 @@
 .bar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.9fr);
+  /* Скасування — вузька іконка, далі обмін і головна кнопка. */
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.9fr);
   gap: 10px;
   padding-top: 2px;
+}
+
+.undo {
+  /* 44px — мінімальна зручна ціль для пальця (WCAG 2.5.8 + iOS HIG). */
+  min-width: 44px;
+  padding-inline: 10px;
 }
 
 .trade,

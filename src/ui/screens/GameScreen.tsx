@@ -152,9 +152,11 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
                 busy={game.rolling || !!game.result}
                 canTrade={game.canTrade}
                 tradesDone={game.tradesDone}
+                canUndo={game.canUndo}
                 onTrade={() => setTradeOpen(true)}
                 onRoll={game.roll}
                 onEndTurn={game.endTurn}
+                onUndo={game.undo}
               />
             </div>
           </footer>
@@ -214,9 +216,11 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
             busy={game.rolling || !!game.result}
             canTrade={game.canTrade}
             tradesDone={game.tradesDone}
+            canUndo={game.canUndo}
             onTrade={() => setTradeOpen(true)}
             onRoll={game.roll}
             onEndTurn={game.endTurn}
+            onUndo={game.undo}
           />
         </>
       )}

@@ -38,6 +38,8 @@ const RESULT_DELAY = 520;
 /** Скільки живуть бейджі +N/−N. */
 const DELTA_LIFETIME = 1800;
 const TOAST_LIFETIME = 1900;
+/** Скільки ходів можна відкотити кнопкою «Скасувати». */
+const UNDO_LIMIT = 12;
 
 export type Screen = 'start' | 'game';
 
@@ -73,6 +75,10 @@ export interface GameApi {
   tradesLeft: number | null;
   /** Чи доступна кнопка обміну зараз. */
   canTrade: boolean;
+  /** Чи можна скасувати останню дію (кидок, обмін, завершення ходу). */
+  canUndo: boolean;
+  /** Скасувати останню застосовану дію. */
+  undo: () => void;
   /** Налаштування застосунку (правила + звук + анімація). */
   settings: AppSettings;
   hasSave: boolean;
@@ -115,6 +121,20 @@ export function useGame(): GameApi {
   const [toast, setToast] = useState<string | null>(null);
   const [hasSave, setHasSave] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
+  /**
+   * Стек знімків стану для «Скасувати хід». За столом найчастіша потреба —
+   * відкотити помилковий кидок, а `resolveRoll`/`endTurn` чисті, тому
+   * достатньо зберігати попередні GameState. Тримаємо останні UNDO_LIMIT
+   * знімків, щоб партія з 40 ходів не тримала 40 копій у памʼяті.
+   */
+  const historyRef = useRef<GameState[]>([]);
+  const [canUndo, setCanUndo] = useState(false);
+
+  const pushHistory = useCallback((previous: GameState | null) => {
+    if (!previous) return;
+    historyRef.current = [...historyRef.current, previous].slice(-UNDO_LIMIT);
+    setCanUndo(true);
+  }, []);
 
   const stateRef = useRef<GameState | null>(null);
   const rollingRef = useRef(false);
@@ -175,6 +195,8 @@ export function useGame(): GameApi {
       sound.click();
       haptic('light');
       const created = createGame(names, rulesOf(settings));
+      historyRef.current = [];
+      setCanUndo(false);
       setState(created);
       setScreen('game');
       setResult(null);
@@ -207,6 +229,8 @@ export function useGame(): GameApi {
       setHasSave(false);
       return;
     }
+    historyRef.current = [];
+    setCanUndo(false);
     setState(saved);
     setScreen('game');
     setResult(null);
@@ -215,6 +239,8 @@ export function useGame(): GameApi {
   }, []);
 
   const toStart = useCallback(() => {
+    historyRef.current = [];
+    setCanUndo(false);
     setState(null);
     setScreen('start');
     setResult(null);
@@ -275,13 +301,16 @@ export function useGame(): GameApi {
     const outcome = pendingRef.current;
     pendingRef.current = null;
     if (outcome) {
+      const before = stateRef.current;
       setState(outcome.state);
       setEvents(outcome.events);
       flashDeltas(outcome.deltas);
       if (outcome.won) setHasSave(false);
+      // Кидок можна відкотити: у стек іде стан ДО кидка (rolled=false).
+      pushHistory(before);
     }
     setResult(null);
-  }, [flashDeltas]);
+  }, [flashDeltas, pushHistory]);
 
   const endTurn = useCallback(() => {
     const current = stateRef.current;
@@ -290,13 +319,14 @@ export function useGame(): GameApi {
     sound.click();
     haptic('light');
     const next = endTurnPure(current);
+    pushHistory(current);
     setState(next);
     setEvents([]);
     setDeltas({});
 
     const player = next.players[next.current];
     if (player) setHandoff({ name: player.name, color: player.color, label: 'Передай пристрій гравцю' });
-  }, []);
+  }, [pushHistory]);
 
   const trade = useCallback(
     (option: TradeOption) => {
@@ -304,6 +334,7 @@ export function useGame(): GameApi {
       if (!current) return;
 
       const outcome = applyTrade(current, option);
+      pushHistory(current);
       setState(outcome.state);
       setEvents(outcome.events);
       flashDeltas(outcome.deltas);
@@ -319,8 +350,30 @@ export function useGame(): GameApi {
         });
       }
     },
-    [flashDeltas, later],
+    [flashDeltas, later, pushHistory],
   );
+
+  /**
+   * «Скасувати хід» — найпотрібніша дія за столом: помилився з кидком або
+   * передав пристрій не тому. Відкочує останню застосовану дію (кидок, обмін,
+   * завершення ходу). Під час анімації кидка недоступна, щоб не рвати
+   * послідовність: спершу «Ок, далі», потім скасування.
+   */
+  const undo = useCallback(() => {
+    if (rollingRef.current || pendingRef.current) return;
+    const previous = historyRef.current[historyRef.current.length - 1];
+    if (!previous) return;
+    historyRef.current = historyRef.current.slice(0, -1);
+    setCanUndo(historyRef.current.length > 0);
+    setState(previous);
+    setEvents([]);
+    setDeltas({});
+    setResult(null);
+    setToast('↩️ Скасовано');
+    sound.click();
+    haptic('medium');
+    later(TOAST_LIFETIME, () => setToast(null));
+  }, [later]);
 
   const trades = useMemo(() => (state ? availableTrades(state) : []), [state]);
 
@@ -377,6 +430,8 @@ export function useGame(): GameApi {
     tradesDone: state?.trades ?? 0,
     tradesLeft: state ? tradesLeft(state) : null,
     canTrade: state ? canTrade(state) : false,
+    /** Чи доступне скасування останньої дії. */
+    canUndo,
     settings,
     hasSave,
     muted: !settings.sound,
@@ -387,6 +442,7 @@ export function useGame(): GameApi {
     endTurn,
     trade,
     dismissResult,
+    undo,
     previewRaid,
     closeHandoff: () => setHandoff(null),
     toggleSound: () => updateSettings({ sound: !settings.sound }),

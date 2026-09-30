@@ -42,6 +42,9 @@ npm run dev        # http://localhost:5173
 | `npm run test` / `test:watch` | тести правил гри (Vitest) |
 | `npm run typecheck` | перевірка типів |
 | `npm run lint` | oxlint (React-правила + загальні) |
+| `npm run check:all` | типи + лінт + тести + усі браузерні аудити однією командою |
+| `npm run check:contrast` | перевірка контрасту пар тексту й фону (WCAG 2.2 AA) |
+| `npm run check:undo` | перевірка скасування ходу в реальному браузері |
 | `npm run assets` | перегенерувати спрайти й іконки з сирців PNG (див. нижче) |
 | `npm run fonts` | завантажити шрифти локально (офлайн, без Google Fonts CDN) |
 | `npm run cap:sync` | білд + синхронізація з нативними проєктами |
