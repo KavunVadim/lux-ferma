@@ -91,20 +91,33 @@ img {
 }
 
 .btn--barn {
-  background: linear-gradient(180deg, #c8523f, var(--barn-dark));
+  /* Верхній край темніший за #c8523f: там білий текст давав 4.44 (< AA). */
+  background: linear-gradient(180deg, #b8473a, var(--barn-dark));
+  color: #fff;
 }
 
+/*
+ * Кольори кнопок не залежать від теми: фон — градієнт із власних відтінків,
+ * текст — власний, а не var(--ink). Причина: у темній темі --ink стає світлим,
+ * і світлий текст на світлому градієнті давав контраст 1.4–2.6 (WCAG-мінімум
+ * для тексту 4.5, для великого 3.0). Усі пари нижче перевірені на ОБОХ кінцях
+ * градієнта в обох темах — таблиця в docs/CONTRAST.md.
+ */
 .btn--green {
-  background: linear-gradient(180deg, #6ab04c, var(--leaf-dark));
+  /* Обидва кінці досить темні для білого тексту в ОБОХ темах (5.2 / 6.45),
+     тому тема тут не потрібна — значення спільні. */
+  background: linear-gradient(180deg, #3f7a30, #2f6b2a);
+  color: #fff;
 }
 
 .btn--gold {
   background: linear-gradient(180deg, #f3c268, var(--gold-dark));
-  color: var(--ink);
+  color: var(--btn-on-gold, #2e2013);
 }
 
 .btn--wood {
-  background: linear-gradient(180deg, var(--wood-light), var(--wood));
+  background: linear-gradient(180deg, #8a5a33, #66421f);
+  color: #fff;
 }
 
 .btn--ghost {

@@ -45,6 +45,7 @@
   --safe-right: env(safe-area-inset-right, 0px);
 }
 
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --bg: #201a12;

@@ -45,6 +45,15 @@
   padding: 10px 12px 12px;
 }
 
+/*
+ * Модалка результату вже показує цей кидок — HUD-кубики під нею ховаємо,
+ * щоб гравець не бачив два однакові набори. visibility (а не display) тримає
+ * місце в розкладці, тому картка не стрибає, коли модалка закривається.
+ */
+.diceCardMuted {
+  visibility: hidden;
+}
+
 .ticker {
   display: -webkit-box;
   -webkit-box-orient: vertical;

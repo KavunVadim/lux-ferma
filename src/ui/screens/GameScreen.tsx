@@ -67,8 +67,14 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
   const winner = state.winnerIndex !== null ? state.players[state.winnerIndex] : undefined;
   const winOpen = state.over && !game.result;
 
+  /**
+   * Кубики в HUD. Модалка результату показує той самий кидок, тому під час
+   * неї HUD-кубики приховуємо: інакше гравець бачить два однакові набори
+   * (один за оверлеєм) і це читається як помилка. Місце зберігаємо через
+   * visibility, щоб картка не стрибала в розкладці.
+   */
   const diceCard = (
-    <div className={cn('card', styles.diceCard)}>
+    <div className={cn('card', styles.diceCard, game.result && styles.diceCardMuted)}>
       <Dice
         faces={(game.rolling || game.result) ? game.rollTarget : state.dice}
         rolling={game.rolling}
@@ -152,9 +158,11 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
                 busy={game.rolling || !!game.result}
                 canTrade={game.canTrade}
                 tradesDone={game.tradesDone}
+                canUndo={game.canUndo}
                 onTrade={() => setTradeOpen(true)}
                 onRoll={game.roll}
                 onEndTurn={game.endTurn}
+                onUndo={game.undo}
               />
             </div>
           </footer>
@@ -214,9 +222,11 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
             busy={game.rolling || !!game.result}
             canTrade={game.canTrade}
             tradesDone={game.tradesDone}
+            canUndo={game.canUndo}
             onTrade={() => setTradeOpen(true)}
             onRoll={game.roll}
             onEndTurn={game.endTurn}
+            onUndo={game.undo}
           />
         </>
       )}
