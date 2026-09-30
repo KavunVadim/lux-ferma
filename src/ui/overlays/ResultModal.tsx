@@ -53,24 +53,64 @@ interface EventCardProps {
   index: number;
 }
 
-/** Картка однієї події: спрайт виду, зміна числом і розкриття розрахунку. */
+/**
+ * Рядок «звідки взялось число»: `У дворі 2 + 1 з кубика = 3 → 1 пара`.
+ *
+ * Раніше це ховалось за кнопкою «розрахунок ↓», і гравець бачив лише +1 без
+ * пояснення. У концепті розрахунок стоїть просто в картці — так зрозуміло, що
+ * саме сталось, без жодного тапу. Показуємо для будь-якої події з `counted`.
+ */
+function PairMath({ counted, kind }: { counted: NonNullable<GameEvent['counted']>; kind: GameEvent['kind'] }) {
+  const { have, fromDice, pairs } = counted;
+  const basis = have + fromDice;
+  const toPair = basis % 2 === 0 ? 2 : 1;
+  const done = kind === 'gain' && pairs > 0;
+
+  return (
+    <span className={styles.math}>
+      <span className={styles.mathLine}>
+        <span className={styles.mathPart}>
+          у дворі <b>{have}</b>
+        </span>
+        <span className={styles.mathOp}>+</span>
+        <span className={styles.mathPart}>
+          з кубика <b>{fromDice}</b>
+        </span>
+        <span className={styles.mathOp}>=</span>
+        <span className={styles.mathTotal}>{basis}</span>
+      </span>
+
+      {done ? (
+        <span className={cn(styles.progress, styles.progressDone)}>
+          <span className={styles.progressBar} style={{ width: '100%' }} />
+          <span className={styles.progressLabel}>
+            пара склалась · {pairs > 1 ? `+${pairs} тварини` : '+1 тварина'}
+          </span>
+        </span>
+      ) : (
+        <span className={styles.progress}>
+          <span className={styles.progressBar} style={{ width: `${Math.min(100, (basis / 2) * 100)}%` }} />
+          <span className={styles.progressLabel}>
+            до пари {basis}/2 — ще {toPair}
+          </span>
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Картка однієї події: спрайт виду, зміна числом і розрахунок у рядку. */
 function EventCard({ event, index }: EventCardProps) {
   const delta = event.delta ?? 0;
   const shown = useCountUp(Math.abs(delta));
-  const [open, setOpen] = useState(event.kind === 'loss' || event.kind === 'gain');
   const subject = event.subject ? ANIMALS[event.subject] : null;
   const counted = event.counted;
-  const basis = counted ? counted.have + counted.fromDice : 0;
-  const toPair = basis % 2 === 0 ? 2 : 1;
+  // Розрахунок показуємо одразу (як у концепті) — деталі лишаються за кліком.
+  const hasMath = !!counted;
 
   return (
     <li className={cn(styles.card, KIND_CLASS[event.kind])} style={{ animationDelay: `${0.1 + index * 0.09}s` }}>
-      <button
-        type="button"
-        className={styles.cardHead}
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open}
-      >
+      <div className={styles.cardHead}>
         <span className={styles.cardIcon}>
           <Sprite
             src={event.subject ? ANIMAL_SPRITES[event.subject] : ''}
@@ -82,14 +122,6 @@ function EventCard({ event, index }: EventCardProps) {
 
         <span className={styles.cardText}>
           <b>{event.text}</b>
-          {event.kind === 'note' && counted && (
-            <span className={styles.progress}>
-              <span className={styles.progressBar} style={{ width: `${Math.min(100, (basis / 2) * 100)}%` }} />
-              <span className={styles.progressLabel}>
-                {basis}/2 до пари — ще {toPair}
-              </span>
-            </span>
-          )}
         </span>
 
         <span className={styles.cardDelta}>
@@ -102,23 +134,25 @@ function EventCard({ event, index }: EventCardProps) {
             <b className={styles.deltaZero}>0</b>
           )}
         </span>
-      </button>
-
-      <div className={styles.cardMeta}>
-        {event.kind !== 'note' && event.farmAfter !== undefined && (
-          <span className={styles.metaChip}>
-            у дворі <b>{event.farmAfter}</b>
-          </span>
-        )}
-        {event.herdAfter !== undefined && (
-          <span className={styles.metaChip}>
-            🧺 стадо <b>{event.herdAfter}</b>
-          </span>
-        )}
-        <span className={styles.metaHint}>{open ? 'розрахунок ↑' : 'розрахунок ↓'}</span>
       </div>
 
-      {open && event.detail && <p className={styles.cardDetail}>{event.detail}</p>}
+      {hasMath && counted && <PairMath counted={counted} kind={event.kind} />}
+
+      {(event.kind !== 'note' && event.farmAfter !== undefined) || event.herdAfter !== undefined || event.detail ? (
+        <div className={styles.cardMeta}>
+          {event.kind !== 'note' && event.farmAfter !== undefined && (
+            <span className={styles.metaChip}>
+              у дворі <b>{event.farmAfter}</b>
+            </span>
+          )}
+          {event.herdAfter !== undefined && (
+            <span className={styles.metaChip}>
+              🧺 стадо <b>{event.herdAfter}</b>
+            </span>
+          )}
+          {event.detail && <span className={styles.cardDetailInline}>{event.detail}</span>}
+        </div>
+      ) : null}
     </li>
   );
 }
