@@ -130,7 +130,19 @@ function applyPredator(next: GameState, face: 'fox' | 'bear', mode: PredatorMode
     return;
   }
 
-  if (player.farm[meta.guard] > 0) {
+  /*
+   * ЧИ Є ЩО ЗАХИЩАТИ.
+   *
+   * Пес витрачається лише тоді, коли у дворі є хоч одна тварина з тих, кого
+   * цей хижак краде (лисиця — качки й кози, ведмідь — свині й коні).
+   *
+   * Раніше пес кидався навіть на порожній двір: витрачався, повертався в
+   * стадо, а гра писала «але забирати нічого». Виходило, що гравець втрачає
+   * охоронця, не врятувавши нікого — це не логіка, а марна трата.
+   */
+  const hasPrey = meta.steals.some((key) => player.farm[key] > 0);
+
+  if (hasPrey && player.farm[meta.guard] > 0) {
     player.farm[meta.guard] -= 1;
     next.herd[meta.guard] += 1;
     events.push({

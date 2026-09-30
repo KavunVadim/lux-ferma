@@ -175,6 +175,40 @@ describe('хижаки та собаки', () => {
     expect(state.players[0]?.farm.cow).toBe(2);
     expect(events.filter((event) => event.kind === 'raid')).toHaveLength(2);
   });
+
+  /*
+   * ПЕС НЕ ВИТРАЧАЄТЬСЯ НА ПОРОЖНІЙ ДВІР.
+   *
+   * Якщо хижак прийшов, а красти нічого (у дворі немає тварин, яких він
+   * краде), пес лишається у дворі: захищати нікого, тож і кидатись нема на
+   * кого. Раніше пес у цій ситуації зникав у стадо, а гра писала «але
+   * забирати нічого» — гравець марно втрачав охоронця.
+   */
+  it('пес лишається, коли хижак прийшов на порожній двір', () => {
+    const base = withFarm(game(), { duck: 0, goat: 0, sdog: 1 });
+    const { state, events } = resolveRoll(base, roll(['duck', 'fox']));
+    expect(state.players[0]?.farm.sdog).toBe(1);
+    expect(state.herd.sdog).toBe(base.herd.sdog);
+    expect(events.some((event) => event.kind === 'save')).toBe(false);
+  });
+
+  it('пес лишається, якщо у дворі лише тварини іншого хижака', () => {
+    // Ведмідь краде свиней і коней. Малий пес захищає від лисиці — проти
+    // ведмедя він не витрачається, бо ведмідь у нього не краде.
+    const base = withFarm(game(), { pig: 2, horse: 1, sdog: 1 });
+    const { state } = resolveRoll(base, roll(['bear', 'goat']));
+    expect(state.players[0]?.farm.sdog).toBe(1);
+    expect(state.players[0]?.farm.pig).toBe(0);
+  });
+
+  it('пес витрачається, коли є кого захищати', () => {
+    // Лисиця краде качок і кіз — малий пес має кинутись.
+    const base = withFarm(game(), { duck: 3, sdog: 1 });
+    const { state, events } = resolveRoll(base, roll(['duck', 'fox']));
+    expect(state.players[0]?.farm.sdog).toBe(0);
+    expect(state.players[0]?.farm.duck).toBeGreaterThanOrEqual(3);
+    expect(events.some((event) => event.kind === 'save')).toBe(true);
+  });
 });
 
 describe('перемога', () => {
