@@ -175,6 +175,27 @@ export function ResultModal({ result, rolling = false, dice, onClose }: ResultMo
     .reduce((sum, event) => sum + Math.abs(event.delta ?? 0), 0);
   const saved = events.filter((event) => event.kind === 'save').length;
 
+  /**
+   * Головна подія ходу — те, що гравець має зрозуміти за секунду.
+   * Пріоритет: напад (найдраматичніше) → захист псом → прибуття → нічого.
+   * Числа тут навмисно найбільші на екрані.
+   */
+  const headline = (() => {
+    if (lost > 0) {
+      const victim = events.find((event) => event.kind === 'loss' && event.subject);
+      return {
+        emoji: victim?.raider === 'bear' ? '🐻' : victim?.raider === 'fox' ? '🦊' : '😱',
+        text: `${victim?.raider ? (victim.raider === 'bear' ? 'Ведмідь забрав' : 'Лисиця вкрала') : 'Забрано'} ${lost}`,
+      };
+    }
+    if (saved > 0) {
+      const guard = events.find((event) => event.kind === 'save');
+      return { emoji: '🛡', text: `${guard?.subject === 'bdog' ? 'Великий пес' : 'Малий пес'} відбив напад` };
+    }
+    if (gained > 0) return { emoji: '🐣', text: `Прибуло ${gained}` };
+    return null;
+  })();
+
   return (
     <Overlay variant="center" label={rolling ? 'Кубики летять' : (result?.title ?? 'Результат ходу')}>
       <div className={styles.modal}>
@@ -201,26 +222,39 @@ export function ResultModal({ result, rolling = false, dice, onClose }: ResultMo
             <p className={styles.tapHint}>Кидаємо — зараз побачимо, що випало</p>
           ) : (
             <>
-              {(gained > 0 || lost > 0 || saved > 0) && (
-                <div className={styles.summary}>
-                  {gained > 0 && (
-                    <span className={cn(styles.summaryChip, styles.summaryGain)}>
-                      🐣 прибуло <b>+{gained}</b>
-                    </span>
+              {/*
+               * ГОЛОВНА ПОДІЯ — великим шрифтом (24px за спекою).
+               * Гравець має зрозуміти результат за одну секунду, тому тут
+               * рівно одне речення про найважливіше, а не список дрібниць.
+               */}
+              {headline && (
+                <div
+                  className={cn(
+                    styles.headline,
+                    result?.tone === 'good' && styles.headlineGood,
+                    result?.tone === 'bad' && styles.headlineBad,
                   )}
-                  {lost > 0 && (
-                    <span className={cn(styles.summaryChip, styles.summaryLoss)}>
-                      😱 забрано <b>−{lost}</b>
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span className={styles.headlineIcon} aria-hidden>
+                    {headline.emoji}
+                  </span>
+                  <b>{headline.text}</b>
+                </div>
+              )}
+
+              {/* Другорядні підсумки — дрібними чипами під головним. */}
+              {(changed.length > 0 || saved > 0) && (
+                <div className={styles.summary}>
+                  {changed.length > 0 && (
+                    <span className={styles.summaryChip}>
+                      змін: <b>{changed.length}</b>
                     </span>
                   )}
                   {saved > 0 && (
                     <span className={cn(styles.summaryChip, styles.summarySave)}>
-                      🛡 відбито нападів: <b>{saved}</b>
-                    </span>
-                  )}
-                  {changed.length > 0 && (
-                    <span className={styles.summaryChip}>
-                      змін: <b>{changed.length}</b>
+                      🛡 відбито: <b>{saved}</b>
                     </span>
                   )}
                 </div>
@@ -231,8 +265,6 @@ export function ResultModal({ result, rolling = false, dice, onClose }: ResultMo
                   <EventCard key={`${event.kind}-${event.subject ?? event.text}-${index}`} event={event} index={index} />
                 ))}
               </ul>
-
-              <p className={styles.tapHint}>Торкнись картки, щоб побачити розрахунок</p>
             </>
           )}
         </div>

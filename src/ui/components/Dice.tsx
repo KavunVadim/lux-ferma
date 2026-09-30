@@ -92,6 +92,8 @@ export function Dice({
     styles.die,
     size === 'mini' && styles.mini,
     size === 'hud' && styles.hud,
+    // Обертання — на самому кубику: 3D-перекид читається як кидок, а лоток
+    // лишається нерухомим, тому картка не «дихає» і не зсуває сусідів.
     rolling && styles.tumbling,
   );
 
@@ -111,11 +113,11 @@ export function Dice({
     <div className={cn(styles.tray, size === 'mini' && styles.trayMini)}>
       <div className={styles.wrap}>
         {renderDie(shown ? shown[0] : null, 'blue')}
-        {labels && <span className={styles.label}>🟦 1-й кубик</span>}
+        {labels && <span className={styles.label}>1-й кубик</span>}
       </div>
       <div className={styles.wrap}>
         {renderDie(shown ? shown[1] : null, 'orange')}
-        {labels && <span className={styles.label}>🟧 2-й кубик</span>}
+        {labels && <span className={styles.label}>2-й кубик</span>}
       </div>
     </div>
   );
