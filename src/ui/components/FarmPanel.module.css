@@ -1,3 +1,15 @@
+/*
+ * «Моя ферма».
+ *
+ * Мобільний (базові стилі) — вертикальний список рядків: спрайт, назва з
+ * роллю, лічильник і залишок стада. Раніше тут була сітка 3×2, де назва
+ * двору не вміщалась (її ховали зовсім) і шість разів повторювалось
+ * «порожньо…». Список дає місце під пояснення ролі й читається згори вниз.
+ *
+ * ПК (`@media (min-width: 1000px)`) — повертаємо сітку карток зі спрайтами
+ * тварин у дворі: там місця вистачає, і «живий» двір виглядає краще.
+ */
+
 .panel {
   display: flex;
   flex-direction: column;
@@ -11,7 +23,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .title {
@@ -19,147 +31,172 @@
   font-size: 1.05rem;
 }
 
-.hint {
-  font-size: 0.68rem;
-  font-weight: 700;
+.progressLabel {
+  font-size: 0.72rem;
+  font-weight: 800;
   color: var(--ink-soft);
 }
 
-.pens {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(106px, 1fr));
-  align-content: start;
-  gap: 6px;
+.progressLabel b {
+  color: var(--leaf-dark);
+  font-size: 0.95rem;
 }
 
-@media (min-width: 420px) {
-  .pens {
-    grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
-    gap: 8px;
-  }
+.progress {
+  flex: none;
+  height: 7px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6ab04c, var(--leaf-dark));
+  transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Список дворів ──────────────────────────────────────────────────────── */
+
+.pens {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 0;
 }
 
 .pen {
   position: relative;
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 88px;
-  border: 3px solid var(--wood);
-  border-radius: var(--radius);
-  background: var(--cream);
-  box-shadow: 0 3px 0 var(--shadow);
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 5px 9px;
+  border: 2px solid var(--line);
+  border-radius: 15px;
+  background: #fff8ea;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .filled {
   border-color: var(--gold-dark);
+  background: #fffdf4;
 }
 
-.sign {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 7px;
-  border-bottom: 2px dashed var(--wood-light);
-  background: var(--cream-2);
-  font-size: 0.72rem;
-  font-weight: 800;
+/* Порожній двір: рамка тихіша й фон плаский — щоб заповнені двори читались
+   як «є», а порожні як «мета». Раніше рамка була однакова і різниці не видно. */
+.pen:not(.filled) {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--cream) 70%, var(--cream-2));
+}
+
+.signIconWrap {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gold) 18%, #fff);
+}
+
+/* Порожній двір приглушуємо — око одразу чіпляється за заповнені. */
+/*
+ * Порожній двір: приглушуємо ЛИШЕ іконку. Раніше opacity 0.45 стояв на всьому
+ * рядку, і назви дворів зливалися з фоном — список читався як «є тільки
+ * качник». Тепер ієрархія тримається на іконці й кольорі лічильника.
+ */
+.signIconIdle {
+  opacity: 0.4;
+  filter: grayscale(0.85);
 }
 
 .signIcon {
-  width: 1.4em;
-  height: 1.4em;
-  font-size: 0.95rem;
+  width: 30px;
+  height: 30px;
+}
+
+.info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
 }
 
 .house {
   overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* На вузьких екранах (3 колонки) назва двору не вміщається — спрайт і так усе каже. */
-@media (max-width: 419px) {
-  .house {
-    display: none;
-  }
+.pen:not(.filled) .house {
+  color: color-mix(in srgb, var(--ink) 78%, var(--cream));
+}
+
+.pen:not(.filled) .role {
+  color: color-mix(in srgb, var(--ink) 52%, var(--cream));
+}
+
+.role {
+  overflow: hidden;
+  color: color-mix(in srgb, var(--ink) 62%, var(--cream));
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.countGroup {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
 
 .count {
-  margin-left: auto;
-  padding: 0 9px;
+  padding: 1px 10px;
   border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.countDone {
   background: var(--hay);
   color: #5a4014;
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 800;
-}
-
-.yard {
-  position: relative;
-  display: flex;
-  flex: 1;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 2px;
-  padding: 6px 7px 18px;
-  font-size: 1.35rem;
-}
-
-@media (min-width: 420px) {
-  .yard {
-    padding: 8px 9px 20px;
-    font-size: 1.6rem;
-  }
-}
-
-.empty {
-  font-size: 0.78rem;
-  font-style: italic;
-  font-weight: 700;
-  color: var(--ink-soft);
-}
-
-.token {
-  width: 1.7em;
-  height: 1.7em;
-  font-size: inherit;
-  animation: token-bob 2.8s ease-in-out infinite;
-}
-
-.token:nth-child(even) {
-  animation-delay: 0.6s;
-}
-
-.more {
-  align-self: center;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.35);
-  color: #fff;
-  font-size: 0.6em;
-  font-weight: 800;
 }
 
 .herd {
-  position: absolute;
-  left: 8px;
-  bottom: 5px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
   color: var(--ink-soft);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 800;
 }
 
+/* На телефоні спрайти у дворі не дублюємо: лічильник праворуч уже все сказав. */
+.yard {
+  display: none;
+}
+
+/* ── Анімації зміни: спалах і струс ─────────────────────────────────────── */
+
 .delta {
   position: absolute;
+  top: 4px;
   right: 10px;
-  bottom: 18px;
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 800;
   pointer-events: none;
   animation: delta-float 1.5s ease-out forwards;
@@ -174,32 +211,27 @@
 }
 
 .gain {
+  border-color: var(--leaf);
   animation: pen-bump 0.8s cubic-bezier(0.2, 1.6, 0.4, 1);
 }
 
 .loss {
-  animation: pen-shake 0.55s ease;
   border-color: var(--barn);
-}
-
-@keyframes token-bob {
-  50% {
-    transform: translateY(-3px);
-  }
+  animation: pen-shake 0.55s ease;
 }
 
 @keyframes delta-float {
   0% {
     opacity: 0;
-    transform: translateY(8px) scale(0.7);
+    transform: translateY(6px) scale(0.7);
   }
   25% {
     opacity: 1;
-    transform: translateY(0) scale(1.15);
+    transform: translateY(0) scale(1.2);
   }
   100% {
     opacity: 0;
-    transform: translateY(-22px) scale(1);
+    transform: translateY(-26px) scale(1);
   }
 }
 
@@ -208,8 +240,8 @@
     transform: scale(1);
   }
   35% {
-    transform: scale(1.06);
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--leaf) 40%, transparent);
+    transform: scale(1.025);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--leaf) 40%, transparent);
   }
   100% {
     transform: scale(1);
@@ -222,9 +254,138 @@
     transform: translateX(0);
   }
   25% {
-    transform: translateX(-6px);
+    transform: translateX(-5px);
   }
   75% {
-    transform: translateX(6px);
+    transform: translateX(5px);
+  }
+}
+
+@keyframes token-bob {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gain,
+  .loss,
+  .delta,
+  .token {
+    animation: none;
+  }
+
+  .progressFill {
+    transition: none;
+  }
+}
+
+/* ── ПК: сітка карток зі спрайтами у дворі ──────────────────────────────── */
+
+@media (min-width: 1000px) {
+  .pens {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
+    align-content: start;
+    gap: 8px;
+  }
+
+  .pen {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    min-height: 88px;
+    padding: 0;
+    overflow: hidden;
+    border: 3px solid var(--wood);
+    border-radius: var(--radius);
+    background: var(--cream);
+    box-shadow: 0 3px 0 var(--shadow);
+  }
+
+  .filled {
+    border-color: var(--gold-dark);
+    background: var(--cream);
+  }
+
+  .signIconWrap {
+    display: none;
+  }
+
+  .info {
+    flex: none;
+    gap: 5px;
+    padding: 4px 7px;
+    border-bottom: 2px dashed var(--wood-light);
+    background: var(--cream-2);
+  }
+
+  .house {
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .role {
+    display: none;
+  }
+
+  .countGroup {
+    position: absolute;
+    top: 3px;
+    right: 6px;
+  }
+
+  .count {
+    padding: 0 8px;
+    background: var(--hay);
+    color: #5a4014;
+    font-size: 0.85rem;
+  }
+
+  .herd {
+    position: absolute;
+    bottom: 4px;
+    left: 8px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    font-size: 0.7rem;
+  }
+
+  .yard {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 2px;
+    padding: 8px 9px 20px;
+    font-size: 1.6rem;
+  }
+
+  .token {
+    width: 1.7em;
+    height: 1.7em;
+    font-size: inherit;
+    animation: token-bob 2.8s ease-in-out infinite;
+  }
+
+  .token:nth-child(even) {
+    animation-delay: 0.6s;
+  }
+
+  .more {
+    align-self: center;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-size: 0.6em;
+    font-weight: 800;
+  }
+
+  .delta {
+    top: auto;
+    right: 10px;
+    bottom: 18px;
   }
 }
