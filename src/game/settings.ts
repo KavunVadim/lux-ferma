@@ -25,6 +25,15 @@ export interface GameRules {
   dicePreset: DicePreset;
   /** Стартовий запас спільного стада. */
   balance: BalancePreset;
+  /**
+   * Чи давати кожному гравцеві качку на старті.
+   *
+   * У настільній грі стартова качка є — вона дає перший хід без глухого
+   * кута: без неї гравець може кілька ходів нічого не отримувати, поки не
+   * випаде качка на кубику. Але комусь цікавіше грати «з нуля», тож це
+   * перемикач, а не жорстко зашите правило.
+   */
+  startDuck: boolean;
 }
 
 export interface AppSettings extends GameRules {
@@ -57,6 +66,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   predatorMode: 'classic',
   dicePreset: 'classic',
   balance: 'classic',
+  startDuck: true,
   sound: true,
   volume: 0.8,
   effects: allEffectsOn(),
@@ -70,6 +80,7 @@ export const DEFAULT_RULES: GameRules = {
   predatorMode: DEFAULT_SETTINGS.predatorMode,
   dicePreset: DEFAULT_SETTINGS.dicePreset,
   balance: DEFAULT_SETTINGS.balance,
+  startDuck: DEFAULT_SETTINGS.startDuck,
 };
 
 /** Вирізає з налаштувань саме правила гри. */
@@ -79,6 +90,7 @@ export function rulesOf(settings: AppSettings): GameRules {
     predatorMode: settings.predatorMode,
     dicePreset: settings.dicePreset,
     balance: settings.balance,
+    startDuck: settings.startDuck,
   };
 }
 
@@ -138,6 +150,8 @@ export function sanitizeSettings(raw: unknown): AppSettings {
     predatorMode,
     dicePreset,
     balance,
+    // Старі збереження не мають цього поля — беремо типове (з качкою).
+    startDuck: typeof input.startDuck === 'boolean' ? input.startDuck : DEFAULT_SETTINGS.startDuck,
     sound: typeof input.sound === 'boolean' ? input.sound : DEFAULT_SETTINGS.sound,
     volume,
     effects,

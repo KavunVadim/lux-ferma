@@ -1,0 +1,23 @@
+import { spawn } from 'node:child_process';
+import { writeFile } from 'node:fs/promises';
+const CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const PORT=9377; const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+const chrome=spawn(CHROME,[`--remote-debugging-port=${PORT}`,'--headless=new','--no-first-run','--disable-gpu','--hide-scrollbars','--user-data-dir=/tmp/lux-sl','about:blank'],{stdio:'ignore'});
+async function du(){for(let i=0;i<80;i++){try{const p=(await(await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()).find(t=>t.type==='page');if(p?.webSocketDebuggerUrl)return p.webSocketDebuggerUrl;}catch{}await sleep(200);}throw new Error('no devtools');}
+const ws=new WebSocket(await du());
+await new Promise((res,rej)=>{ws.addEventListener('open',res);ws.addEventListener('error',()=>rej(new Error('ws')));});
+let id=0;const pend=new Map();
+ws.addEventListener('message',e=>{const m=JSON.parse(e.data);const p=pend.get(m.id);if(!p)return;pend.delete(m.id);m.error?p.reject(new Error(JSON.stringify(m.error))):p.resolve(m.result);});
+const send=(method,params={})=>new Promise((resolve,reject)=>{const i=++id;pend.set(i,{resolve,reject});ws.send(JSON.stringify({id:i,method,params}));});
+const ev=async(x)=>{const r=await send('Runtime.evaluate',{expression:x,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.text);return r.result.value;};
+await send('Page.enable');await send('Runtime.enable');
+await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:3,mobile:true});
+await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'light'}]});
+await send('Page.navigate',{url:'http://localhost:5173/'});
+await sleep(3200);
+const info=await ev(`(()=>{const c=document.querySelector('[class*="_card_"]');const cs=c?getComputedStyle(c):null;const sign=document.querySelector('[class*="_sign_"]');const ss=sign?getComputedStyle(sign):null;return{cardBg:cs?.backgroundColor,signBg:ss?.backgroundImage?.slice(0,60),rootTheme:document.documentElement.dataset.theme??'(немає)',scheme:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light',ink:getComputedStyle(document.documentElement).getPropertyValue('--ink').trim(),card:getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};})()`);
+console.log(JSON.stringify(info,null,1));
+const {data}=await send('Page.captureScreenshot',{format:'png'});
+await writeFile('/tmp/start-light.png',Buffer.from(data,'base64'));
+console.log('знімок: /tmp/start-light.png');
+ws.close();chrome.kill();process.exit(0);

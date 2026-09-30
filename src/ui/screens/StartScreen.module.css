@@ -3,11 +3,19 @@
  * гравців, велика зелена кнопка старту, другорядні дії — у дерев'яному лотку.
  */
 
+/*
+ * СТОРІНКА СТАРТОВОГО ЕКРАНА.
+ *
+ * Було `justify-content: center`: усе тулилось у середину, лишаючи пустоту
+ * згори й знизу. Тепер `space-between` — вивіска сідає вгорі, лоток кнопок
+ * внизу (там, куди дістає великий палець), картка стоїть між ними, а
+ * проміжки розподіляються рівномірно.
+ */
 .screen {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 14px;
   min-height: 100dvh;
   padding: calc(var(--safe-top) + 18px) 16px calc(var(--safe-bottom) + 18px);
@@ -266,14 +274,46 @@
 
 /* ── Картка налаштування гравців ── */
 
+/*
+ * КАРТКА НАЛАШТУВАННЯ ГРАВЦІВ.
+ *
+ * На екрані 390×844 знизу лишалось 207px пустоти, а вміст картки тулився
+ * вгорі. Тепер картка забирає вільну висоту (`flex: 1`) і розподіляє її
+ * МІЖ СВОЇМИ БЛОКАМИ: вибір кількості, поля імен і кнопка «Почати гру»
+ * стоять рівномірно, а не скупчено зверху.
+ */
+/*
+ * КАРТКА НАЛАШТУВАННЯ ГРАВЦІВ.
+ *
+ * Чотири підходи, які я перепробував (заміри на 390×844):
+ *   · вміст за замовчуванням — тулився вгорі, знизу висіло 207px пустоти;
+ *   · `flex: 1` + `space-evenly` — блоки роз'їхались, провали між кожним;
+ *   · `flex: 1` + `space-between` — провал осів між вибором і полями імен;
+ *   · `flex: 1` + `margin-top: auto` на кнопці — пустота переїхала в
+ *     середину, бо з двома гравцями вмісту менше за картку.
+ *
+ * Спільна помилка всіх чотирьох: я ЗМУШУВАВ картку тягнутись на всю висоту.
+ * Тепер картка бере рівно стільки, скільки треба вмісту, а зайве місце
+ * дістається розкладці сторінки — воно розподіляється між вивіскою, карткою
+ * й лотком кнопок рівномірно (див. `.screen`).
+ */
 .card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 420px;
+  padding: 20px 16px 20px;
+}
+
+/* Верхній блок карти: заголовок і вибір кількості — купи. */
+.cardTop {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
   width: 100%;
-  max-width: 420px;
-  padding: 18px 16px 20px;
 }
 
 .cardTitle {
@@ -286,22 +326,34 @@
   gap: 10px;
 }
 
+/*
+ * ПЛИТКА «СКІЛЬКИ ГРАВЦІВ».
+ *
+ * Приведена до тієї самої мови, що плитки дворів у грі та варіанти в
+ * налаштуваннях: радіус 14px (не 18), рамка 2px, а вибір позначається
+ * ТРЬОМА сигналами — зелена рамка, зелене тло і галочка в куті. Кольору
+ * самого мало: за столом на екран дивляться під кутом, і форму видно краще.
+ */
 .pick {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   min-width: 86px;
+  min-height: 72px;
+  justify-content: center;
   padding: 8px 12px 6px;
-  border: 3px solid var(--wood);
-  border-radius: 18px;
+  border: 2px solid var(--wood-light);
+  border-radius: 14px;
   background: var(--cream-2);
   color: var(--ink);
   cursor: pointer;
   transition:
     transform 0.15s cubic-bezier(0.3, 1.6, 0.5, 1),
     background 0.2s ease,
-    border-color 0.2s ease;
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .pick:active {
@@ -310,9 +362,29 @@
 
 .pickActive {
   border-color: var(--leaf-dark);
-  background: color-mix(in srgb, var(--leaf) 22%, var(--cream-2));
+  background: color-mix(in srgb, var(--leaf) 20%, var(--card));
   transform: translateY(-3px);
-  box-shadow: 0 5px 0 var(--leaf-dark);
+  box-shadow:
+    0 5px 0 var(--leaf-dark),
+    0 0 0 2px color-mix(in srgb, var(--leaf) 30%, transparent);
+}
+
+/* Галочка вибраного — як у налаштуваннях і на плитках дворів. */
+.pickActive::after {
+  content: '✓';
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  background: var(--leaf-dark);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .pickFaces {
@@ -351,6 +423,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  /* Поля вже 50px, але рядок ширший за картку на малих екранах — не даємо
+     йому вилазити за межі. */
+  min-width: 0;
   animation: row-in 0.3s ease both;
 }
 
@@ -404,8 +479,34 @@
     inset 0 2px 0 rgba(255, 255, 255, 0.22);
 }
 
+/*
+ * Кнопки в лотку — під палець.
+ *
+ * Вимір показав 40px при нормі WCAG 2.5.8 (44px): у решті гри тап-цілі 44+,
+ * і саме на стартовому екрані був провал. 56px — як у кнопок дій у грі.
+ *
+ * Селектор саме `.tray .btn` (а не `.tray > *`): кнопки тут із варіантом
+ * `small`, який задає власний min-height 40px і перебиває батьківське
+ * правило. Два класи в селекторі дають потрібну специфічність.
+ */
 .tray > * {
   flex: 1;
+  /* 56px — як кнопки дій у грі. `white-space: nowrap`: «Налаштування» —
+     довге слово, і за рівних половинок лотка воно ламалось на два рядки
+     разом із іконкою над текстом. */
+  min-height: 56px;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+/*
+ * «ПОЧАТИ ГРУ» — головна дія екрана, тож найбільша кнопка тут.
+ * Вимір показував 51px — менше за другорядні «Як грати» (72px), що
+ * перевертало ієрархію: око чіплялось за другорядне.
+ */
+.card > :global(.btn) {
+  min-height: 64px;
+  font-size: 1.12rem;
 }
 
 @keyframes hero-hop {

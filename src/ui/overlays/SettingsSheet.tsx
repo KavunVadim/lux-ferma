@@ -96,12 +96,29 @@ export function SettingsSheet({
           </button>
         </div>
 
-        <p className={styles.settingSummary}>
-          Обміни: <b>{settings.tradesPerTurn === null ? 'без обмежень' : settings.tradesPerTurn}</b> · Хижаки:{' '}
-          <b>{PREDATOR_MODES[settings.predatorMode].label.toLowerCase()}</b> · Кубики:{' '}
-          <b>{DICE_PRESETS[settings.dicePreset].label.toLowerCase()}</b> · Напад:{' '}
-          <b>{raidChance(settings.dicePreset)}</b>
-        </p>
+        {/*
+         * Підсумок поточних правил чіпами, а не рядком тексту: за одним
+         * столом на екран дивляться під кутом, і стан має читатись з
+         * півпогляду, а не вичитуватись.
+         */}
+        <div className={styles.settingSummary}>
+          <span className={styles.summaryChip}>
+            <i>Обміни</i>
+            <b>{settings.tradesPerTurn === null ? '∞' : settings.tradesPerTurn}</b>
+          </span>
+          <span className={styles.summaryChip}>
+            <i>Хижаки</i>
+            <b>{PREDATOR_MODES[settings.predatorMode].label.toLowerCase()}</b>
+          </span>
+          <span className={styles.summaryChip}>
+            <i>Кубики</i>
+            <b>{DICE_PRESETS[settings.dicePreset].label.toLowerCase()}</b>
+          </span>
+          <span className={styles.summaryChip}>
+            <i>Напад</i>
+            <b>{raidChance(settings.dicePreset).replace(' ходів', '')}</b>
+          </span>
+        </div>
 
         <OptionRow<number | null>
           title="🔁 Обміни за хід"
@@ -145,6 +162,22 @@ export function SettingsSheet({
           }))}
           value={settings.balance}
           onSelect={(value) => onChange({ balance: value })}
+        />
+
+        {/*
+         * Стартова качка. У настільній грі вона є й дає перший хід без глухого
+         * кута: без неї можна кілька ходів нічого не отримувати. Але комусь
+         * цікавіше «з нуля», тож це перемикач.
+         */}
+        <OptionRow<boolean>
+          title="🦆 Качка на старті"
+          hint={inGame ? 'діє з наступної партії' : 'перша тварина кожному гравцеві'}
+          options={[
+            { value: true, label: 'Давати', hint: 'кожен починає з 1 качкою' },
+            { value: false, label: 'Не давати', hint: 'усі починають із порожнім двором' },
+          ]}
+          value={settings.startDuck}
+          onSelect={(value) => onChange({ startDuck: value })}
         />
 
         <section className={styles.settingGroup}>
@@ -226,41 +259,60 @@ export function SettingsSheet({
           </div>
         </section>
 
-        <OptionRow<boolean>
-          title="📳 Вібрація"
-          hint={
-            hapticsSupported()
-              ? 'тактильний відгук на телефоні'
-              : 'на цьому пристрої браузер не дає доступу до вібрації'
-          }
-          options={[
-            { value: true, label: 'Увімкнено', hint: 'легкий відгук на дії' },
-            { value: false, label: 'Вимкнено', hint: 'без вібрації' },
-          ]}
-          value={settings.vibration}
-          onSelect={(value) => onChange({ vibration: value })}
-        />
+        <section className={styles.settingGroup}>
+          <header className={styles.settingHead}>
+            <b>📳 Вібрація</b>
+            <span className={styles.groupHint}>
+              {hapticsSupported()
+                ? 'тактильний відгук на телефоні'
+                : 'на цьому пристрої браузер не дає доступу до вібрації'}
+            </span>
+          </header>
+          <div className={styles.optionGrid}>
+            <button
+              type="button"
+              className={cn(styles.option, settings.vibration && styles.optionActive)}
+              onClick={() => onChange({ vibration: true })}
+              aria-pressed={settings.vibration}
+            >
+              <b>Увімкнено</b>
+              <span>легкий відгук на дії</span>
+            </button>
+            <button
+              type="button"
+              className={cn(styles.option, !settings.vibration && styles.optionActive)}
+              onClick={() => onChange({ vibration: false })}
+              aria-pressed={!settings.vibration}
+            >
+              <b>Вимкнено</b>
+              <span>без вібрації</span>
+            </button>
+          </div>
 
-        {/*
-         * На iPhone navigator.vibrate не існує — єдиний шлях це імпульс через
-         * AudioContext. Тому даємо гравцеві самому перевірити: якщо відгуку
-         * немає, він знатиме, що це пристрій, а не гра.
-         */}
-        <button
-          type="button"
-          className={styles.soundTest}
-          disabled={!settings.vibration}
-          onClick={() => testHaptic()}
-        >
-          📳 Перевірити вібрацію
-          <span>
-            {!settings.vibration
-              ? 'вібрацію вимкнено — увімкни вище'
-              : hapticsSupported()
-                ? 'натисни — має бути короткий поштовх'
-                : 'цей браузер не підтримує вібрацію'}
-          </span>
-        </button>
+          {/*
+           * На iPhone navigator.vibrate не існує — єдиний шлях це імпульс
+           * через AudioContext. Тому даємо гравцеві самому перевірити: якщо
+           * відгуку немає, він знатиме, що це пристрій, а не гра.
+           *
+           * Кнопка стоїть УСЕРЕДИНІ групи «Вібрація», а не окремою карткою:
+           * це дія того самого налаштування.
+           */}
+          <button
+            type="button"
+            className={styles.soundTest}
+            disabled={!settings.vibration}
+            onClick={() => testHaptic()}
+          >
+            📳 Перевірити вібрацію
+            <span>
+              {!settings.vibration
+                ? 'вібрацію вимкнено — увімкни вище'
+                : hapticsSupported()
+                  ? 'натисни — має бути короткий поштовх'
+                  : 'цей браузер не підтримує вібрацію'}
+            </span>
+          </button>
+        </section>
 
         <OptionRow<ThemeMode>
           title="🎨 Тема"

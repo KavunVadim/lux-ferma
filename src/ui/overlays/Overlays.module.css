@@ -1008,18 +1008,58 @@
 
 /*────────────────────── Налаштування (екран правил і звуку) ──────────────────*/
 
+/*
+ * ПІДСУМОК ПОТОЧНИХ ПРАВИЛ.
+ *
+ * Було одним рядком тексту («Обміни: без обмежень · Хижаки: як у грі · …») —
+ * його доводилось читати, щоб знайти потрібне. Тепер це чіпи: кожне правило
+ * окремою плиткою з підписом і значенням, тож стан видно з півпогляду.
+ */
 .settingSummary {
-  margin: 0 0 12px;
-  padding: 8px 11px;
-  border-radius: 12px;
-  background: var(--cream-2);
-  font-size: 0.8rem;
-  font-weight: 700;
-  line-height: 1.5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0 0 14px;
 }
 
+.summaryChip {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 3px 9px;
+  border: 2px solid var(--wood-light);
+  border-radius: 999px;
+  background: var(--cream-2);
+  /* 0.68rem і щільніші відступи: чотири чіпи мають стати в один рядок на
+     390px — на два рядки «Напад 16% ходів» падав сам і виглядав обірваним. */
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.summaryChip i {
+  color: var(--ink-soft);
+  font-style: normal;
+}
+
+.summaryChip b {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+/*
+ * ГРУПА НАЛАШТУВАНЬ — картка, а не «заголовок + купа кнопок».
+ *
+ * Раніше групи не мали меж: заголовок зливався з попереднім блоком, і
+ * не було видно, де закінчується одна тема й починається інша.
+ */
 .settingGroup {
   margin-bottom: 12px;
+  padding: 11px 12px 12px;
+  border: 2px solid var(--wood-light);
+  border-radius: 16px;
+  background: var(--card);
 }
 
 .settingHead {
@@ -1027,8 +1067,15 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px;
-  margin-bottom: 6px;
-  font-size: 0.95rem;
+  margin-bottom: 8px;
+  font-size: 0.98rem;
+}
+
+/* Заголовок групи — акцентним кольором, як заголовки в інструкції. */
+.settingHead b {
+  color: var(--barn);
+  font-family: var(--font-display);
+  font-weight: 800;
 }
 
 .optionGrid {
@@ -1038,12 +1085,14 @@
 }
 
 .option {
+  position: relative;
   display: grid;
   gap: 3px;
+  min-height: 56px;
   padding: 9px 11px;
-  border: 3px solid var(--wood-light);
+  border: 2px solid var(--wood-light);
   border-radius: 14px;
-  background: var(--card);
+  background: var(--cream-2);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.88rem;
@@ -1052,7 +1101,8 @@
   transition:
     transform 0.12s ease,
     border-color 0.12s ease,
-    background 0.12s ease;
+    background 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .option span {
@@ -1066,10 +1116,35 @@
   border-color: var(--leaf);
 }
 
+/*
+ * ВИБРАНИЙ ВАРІАНТ.
+ *
+ * Раніше відрізнявся лише світло-зеленим тлом — на вохристих картках це
+ * читалось погано. Тепер три сигнали одразу: зелене тло, зелена рамка і
+ * галочка в куті. Галочка важлива: за столом на екран дивляться під кутом,
+ * і колір розрізняється гірше за форму.
+ */
 .optionActive {
-  border-color: var(--leaf);
-  background: color-mix(in srgb, var(--leaf) 16%, var(--card));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--leaf) 22%, transparent);
+  border-color: var(--leaf-dark);
+  background: color-mix(in srgb, var(--leaf) 20%, var(--card));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--leaf) 30%, transparent);
+}
+
+.optionActive::after {
+  content: '✓';
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--leaf-dark);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .sliderRow {
@@ -1232,6 +1307,352 @@
   background: var(--cream-2);
   font-size: 0.8rem;
   font-weight: 800;
+}
+
+/*────────────────────────── Інструкція (правила) ────────────────────────*/
+
+/*
+ * ВІЗУАЛЬНА ІНСТРУКЦІЯ.
+ *
+ * Раніше правила були суцільним текстом у згорнутих <details>. Тепер кожна
+ * тема — картка зі своєю подачею: мета показує іконки тварин, хід — кроки,
+ * кубики — смужки ймовірності, обмін — драбину зі стрілками. Числа беруться
+ * з конфіга, тож текст не розійдеться з грою за зміни балансу.
+ */
+.ruleCard {
+  margin-bottom: 10px;
+  padding: 12px 13px;
+  border: 2px solid var(--wood-light);
+  border-radius: 16px;
+  background: var(--card);
+}
+
+.ruleTitle {
+  margin: 0 0 6px;
+  color: var(--barn);
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+.ruleLead {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.ruleNote {
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+/* ── Мета: п'ять тварин у рядок ── */
+
+.goalRow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.goalItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 2px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--cream-2);
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.goalFace {
+  width: 38px;
+  height: 38px;
+  font-size: 1.5rem;
+  object-fit: contain;
+}
+
+/* ── Хід: пронумеровані кроки ── */
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 12px;
+  background: var(--cream-2);
+}
+
+.stepNum {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--leaf);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.stepIcon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.stepText {
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* ── Кубики: смужки ймовірності ── */
+
+.chanceHead {
+  margin: 9px 0 5px;
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chanceList {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chanceRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 58px auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.chanceFace {
+  width: 22px;
+  height: 22px;
+  font-size: 0.95rem;
+  object-fit: contain;
+}
+
+.chanceName {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chanceBar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.chanceBar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  /* Хижаки — цеглою, здобич — зеленню: видно, що це «поганий» результат. */
+  background: var(--leaf);
+}
+
+.chancePercent {
+  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+/* ── Розмноження: наочний приклад ── */
+
+.birthExample {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--leaf) 12%, var(--card));
+}
+
+.birthCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 42px;
+}
+
+.birthCol b {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.birthCol small {
+  color: var(--ink-soft);
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.birthOp {
+  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+/* ── Хижаки: «хто краде → кого → хто захищає» ── */
+
+.beastList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.beastRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 8px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--cream-2);
+}
+
+.beastSide {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.beastFace {
+  width: 30px;
+  height: 30px;
+  font-size: 1.2rem;
+  object-fit: contain;
+}
+
+.beastPrey {
+  width: 24px;
+  height: 24px;
+  font-size: 1rem;
+  object-fit: contain;
+  opacity: 0.85;
+}
+
+.beastArrow {
+  color: var(--barn);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.beastGuard {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  padding: 2px 8px 2px 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--leaf) 20%, var(--card));
+}
+
+.beastGuard small {
+  color: var(--ink);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+/* ── Обмін: драбина ── */
+
+/* Орієнтовні рядки (обмін на собаків) — тьмяніший пунктир, щоб було видно,
+   що це не така сама таблиця, як для видів. */
+.ladderStep[data-soft='true'] {
+  border-style: dotted;
+  opacity: 0.85;
+}
+
+.ladderRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ladderStep {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 2px dashed var(--wood-light);
+  border-radius: 12px;
+  background: var(--cream-2);
+}
+
+.ladderSide {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.ladderSide:last-child {
+  justify-content: flex-end;
+}
+
+.ladderFace {
+  width: 28px;
+  height: 28px;
+  font-size: 1.15rem;
+  object-fit: contain;
+}
+
+.ladderEq {
+  color: var(--gold-dark);
+  font-size: 1rem;
 }
 
 /*─────────────────────────────── Перемога ──────────────────────────────*/

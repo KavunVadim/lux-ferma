@@ -104,9 +104,10 @@ export function StartScreen({ hasSave, onStart, onResume, onOpenRules, onOpenSet
       )}
 
       <div className={cn('card', styles.card)}>
-        <h3 className={styles.cardTitle}>Скільки гравців?</h3>
+        <div className={styles.cardTop}>
+          <h3 className={styles.cardTitle}>Скільки гравців?</h3>
 
-        <div className={styles.picker} role="radiogroup" aria-label="Кількість гравців">
+          <div className={styles.picker} role="radiogroup" aria-label="Кількість гравців">
           {COUNTS.map((value) => (
             <button
               key={value}
@@ -126,7 +127,8 @@ export function StartScreen({ hasSave, onStart, onResume, onOpenRules, onOpenSet
               </span>
               <b className={styles.pickCount}>{value}</b>
             </button>
-          ))}
+            ))}
+          </div>
         </div>
 
         <div className={styles.names}>
@@ -160,10 +162,15 @@ export function StartScreen({ hasSave, onStart, onResume, onOpenRules, onOpenSet
       </div>
 
       <footer className={styles.tray}>
-        <Button variant="wood" small onClick={onOpenRules}>
+        {/*
+         * Без варіанта `small`: він задає min-height 40px — нижче норми
+         * WCAG 2.5.8 (44px), і саме на стартовому екрані був провал, тоді як
+         * у решті гри тап-цілі 44+. Висоту задає CSS-модуль лотка.
+         */}
+        <Button variant="wood" onClick={onOpenRules}>
           📖 Як грати
         </Button>
-        <Button variant="wood" small onClick={onOpenSettings}>
+        <Button variant="wood" onClick={onOpenSettings}>
           ⚙️ Налаштування
         </Button>
       </footer>

@@ -193,23 +193,96 @@ img {
 }
 
 /*────────────────────────────── Іконка-кнопка ──────────────────────────────*/
+/*
+ * ІКОНКИ-ҐУДЗИКИ у верхній панелі.
+ *
+ * Було: пласке коло з напівпрозорим фоном і без тіні — на тлі неба й трави
+ * воно читалось як «вимкнене». Тепер це справжні ґудзики в стилі кнопок дій:
+ * дерев'яна основа, об'ємна тінь знизу, світлий блиск зверху. За одне
+ * натискання «вдавлюються», як і решта кнопок гри.
+ *
+ * Розмір 46px: тап-ціль вище мінімуму WCAG 2.5.8 (44px), і водночас п'ять
+ * кнопок у рядку вміщаються на 390px.
+ */
 .icon-btn {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   flex: none;
-  border: 2px solid var(--line);
+  border: 2px solid var(--wood);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--card) 88%, transparent);
+  /* Дерев'яний ґудзик: теплий градієнт замість плаского кольору. */
+  background: linear-gradient(180deg, #fff6e2, #ecd9b4);
   color: var(--ink);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
+  line-height: 1;
   cursor: pointer;
-  transition: transform 0.1s ease;
+  box-shadow:
+    0 3px 0 var(--wood),
+    0 5px 12px rgba(0, 0, 0, 0.22);
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    filter 0.15s ease;
 }
 
+/* Блиск зверху: той самий прийом, що на кнопках дій — об'єм. */
+.icon-btn::before {
+  content: '';
+  position: absolute;
+  inset: 3px 3px 45% 3px;
+  border-radius: 50% 50% 40% 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.icon-btn:hover {
+  filter: brightness(1.06);
+}
+
+/* Натискання: ґудзик «вдавлюється» — тінь зникає, вміст їде вниз. */
 .icon-btn:active {
-  transform: scale(0.92);
+  transform: translateY(3px);
+  box-shadow:
+    0 0 0 var(--wood),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* У темній темі — власні відтінки: світлий ґудзик на темному тлі світив би. */
+@media (prefers-color-scheme: dark) {
+  .icon-btn {
+    border-color: #7a5231;
+    background: linear-gradient(180deg, #5a4227, #3d2c19);
+    color: #f5ecd9;
+    box-shadow:
+      0 3px 0 #2a1d10,
+      0 5px 12px rgba(0, 0, 0, 0.45);
+  }
+
+  .icon-btn::before {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
+  }
+
+  .icon-btn:active {
+    box-shadow:
+      0 0 0 #2a1d10,
+      0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+}
+
+[data-theme='dark'] .icon-btn {
+  border-color: #7a5231;
+  background: linear-gradient(180deg, #5a4227, #3d2c19);
+  color: #f5ecd9;
+  box-shadow:
+    0 3px 0 #2a1d10,
+    0 5px 12px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme='dark'] .icon-btn::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
 }
 
 /*────────────────────────────── Картки / чіпи ──────────────────────────────*/

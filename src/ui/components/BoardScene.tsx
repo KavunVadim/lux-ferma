@@ -1,16 +1,10 @@
-import {
-  ANIMAL_SPRITES,
-  assetUrl,
-  BUILDING_SPRITES,
-  MAP_URL,
-  PREDATOR_SPRITES,
-} from '../../assets/manifest';
-import { ANIMALS, DECOR, HERD_KEYS, PREDATORS, SPRITE_SCALE, ZONES } from '../../game/config';
-import { WALK_SHEETS } from '../../assets/walk';
+import { ANIMAL_SPRITES, assetUrl, BUILDING_SPRITES, MAP_URL } from '../../assets/manifest';
+import { ANIMALS, DECOR, HERD_KEYS, SPRITE_SCALE, ZONES } from '../../game/config';
 import type { DecorPlacement, ZoneLayout } from '../../game/config';
 import type { GameEvent, GameState, HerdKey } from '../../game/types';
 import { cn } from '../../lib/cn';
 import { motionFor } from '../lib/motion';
+import { RaidRun, raidVictims } from './RaidRun';
 import { Sprite } from './Sprite';
 import { WalkToken } from './WalkToken';
 import styles from './BoardScene.module.css';
@@ -54,6 +48,20 @@ export function BoardScene({
   const zoneMap = zones ?? ZONES;
   const decorList = decor ?? DECOR;
 
+  /*
+   * Набіг показуємо з ОКРЕМОГО шару сцени, а не всередині загону.
+   *
+   * Беремо першу подію з хижаком (лисиця або ведмідь за хід буває лише одна)
+   * і показуємо маршрут лише тоді, коли є що красти: інакше хижак бігав би
+   * по порожніх дворах, що виглядає як помилка.
+   */
+  const raidEvent = events.find(
+    (item) =>
+      item.raider &&
+      (item.kind === 'loss' || item.kind === 'raid') &&
+      raidVictims(item.raider).some((key) => (farm?.[key] ?? 0) > 0 || (item.delta ?? 0) !== 0),
+  );
+
   return (
     <div className={cn(styles.field, className)} data-swap>
       <div className={styles.canvas} style={{ backgroundImage: `url(${MAP_URL})` }}>
@@ -73,7 +81,6 @@ export function BoardScene({
           const count = farm ? farm[key] : 0;
           const shown = Math.min(count, zone.cap);
           const event = events.find((item) => item.subject === key);
-          const raider = event?.raider;
           const delta = deltas[key];
 
           return (
@@ -107,35 +114,12 @@ export function BoardScene({
                 }}
               />
 
-              {raider && (
-                <span key={`${raider}-${deltaKey}`} className={styles.raider}>
-                  {/*
-                   * Якщо для хижака є справжні кадри бігу (аркуш від користувача) —
-                   * показуємо стрічку, як у тварин. Інакше лишається статичний
-                   * спрайт: набіг усе одно читається завдяки CSS-кидку .raider.
-                   */}
-                  {WALK_SHEETS[raider] ? (
-                    <span
-                      className={cn(styles.walker, styles.raiderSprite)}
-                      style={{ ['--frames' as string]: String(WALK_SHEETS[raider].frames) }}
-                    >
-                      <img
-                        className={styles.walkStrip}
-                        src={assetUrl(WALK_SHEETS[raider].url)}
-                        alt={PREDATORS[raider].label}
-                        draggable={false}
-                      />
-                    </span>
-                  ) : (
-                    <Sprite
-                      src={PREDATOR_SPRITES[raider]}
-                      emoji={PREDATORS[raider].emoji}
-                      alt={PREDATORS[raider].label}
-                      className={styles.raiderSprite}
-                    />
-                  )}
-                </span>
-              )}
+              {/*
+               * Хижак більше НЕ малюється всередині загону: він ходить
+               * маршрутом по всій сцені (див. RaidRun нижче). У зоні
+               * лишається тільки підсвітка «тут щось сталось» — клас .lost
+               * вище.
+               */}
 
               {/* Захист: пес вибігає з будки назустріч хижакові. */}
               {event?.kind === 'save' && event.subject && (
@@ -217,6 +201,18 @@ export function BoardScene({
             </button>
           );
         })}
+
+        {/*
+         * НАБІГ ХИЖАКА — всередині КАРТИ, а не поля.
+         *
+         * Це критично: ZONES задані у відсотках від карти, а карта ширша за
+         * екран (вона масштабується «як cover»). Якби хижак жив у `.field`,
+         * ті самі відсотки вказували б на інше місце, і лисиця зупинялась би
+         * за 300px від загону.
+         *
+         * Лежить у кінці, щоб проходити НАД дворами, а не під ними.
+         */}
+        {raidEvent && <RaidRun event={raidEvent} deltaKey={deltaKey} />}
       </div>
     </div>
   );

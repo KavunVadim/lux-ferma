@@ -1,6 +1,8 @@
-import { ANIMALS, DICE_PRESETS, PREDATORS, TRADE_LADDER } from '../../game/config';
+import { ANIMAL_SPRITES } from '../../assets/manifest';
+import { ANIMALS, DICE_PRESETS, PREDATORS, SPECIES, TRADE_LADDER } from '../../game/config';
 import type { DiceFace } from '../../game/types';
 import { Button } from '../components/Button';
+import { Sprite } from '../components/Sprite';
 import { Overlay } from './Overlay';
 import styles from './Overlays.module.css';
 
@@ -14,119 +16,282 @@ interface RulesSheetProps {
 interface CountedFace {
   face: DiceFace;
   count: number;
-  percent: string;
+  percent: number;
 }
 
 function countFaces(table: readonly DiceFace[]): CountedFace[] {
   const seen = new Map<DiceFace, number>();
   for (const face of table) seen.set(face, (seen.get(face) ?? 0) + 1);
   return [...seen.entries()]
-    .map(([face, count]) => ({ face, count, percent: `${((count / table.length) * 100).toFixed(1)}%` }))
+    .map(([face, count]) => ({ face, count, percent: (count / table.length) * 100 }))
     .sort((a, b) => b.count - a.count);
 }
 
 const faceEmoji = (face: DiceFace): string =>
   face === 'fox' ? PREDATORS.fox.emoji : face === 'bear' ? PREDATORS.bear.emoji : ANIMALS[face].emoji;
 
-/** Повні правила гри — той самий текст, що на настільній коробці. */
+const faceLabel = (face: DiceFace): string =>
+  face === 'fox' ? PREDATORS.fox.label : face === 'bear' ? PREDATORS.bear.label : ANIMALS[face].label;
+
+/** Спрайт/емодзі тварини — спільне для всіх блоків інструкції. */
+function Face({ face, className }: { face: DiceFace; className?: string }) {
+  const isBeast = face === 'fox' || face === 'bear';
+  return (
+    <Sprite
+      src={isBeast ? PREDATORS[face].sprite : ANIMAL_SPRITES[face]}
+      emoji={faceEmoji(face)}
+      alt={faceLabel(face)}
+      className={className}
+    />
+  );
+}
+
+/** Один крок ходу: номер у кружечку + текст. */
+function Step({ n, icon, children }: { n: number; icon: string; children: React.ReactNode }) {
+  return (
+    <li className={styles.step}>
+      <span className={styles.stepNum}>{n}</span>
+      <span className={styles.stepIcon} aria-hidden>
+        {icon}
+      </span>
+      <span className={styles.stepText}>{children}</span>
+    </li>
+  );
+}
+
+/** Рядок таблиці шансів: тварина, скільки граней, смужка ймовірності. */
+function ChanceRow({ item, max }: { item: CountedFace; max: number }) {
+  return (
+    <li className={styles.chanceRow}>
+      <Face face={item.face} className={styles.chanceFace} />
+      <span className={styles.chanceName}>{faceLabel(item.face)}</span>
+      <span className={styles.chanceBar}>
+        <i style={{ width: `${(item.count / max) * 100}%` }} />
+      </span>
+      <b className={styles.chancePercent}>{item.percent.toFixed(0)}%</b>
+    </li>
+  );
+}
+
+/**
+ * Правила гри — візуальна інструкція.
+ *
+ * Раніше це був суцільний текст у згорнутих блоках: щоб дізнатись мету,
+ * треба було читати абзац. Тепер кожна тема має свою подачу:
+ *   · мета — п'ять іконок тварин, яких треба зібрати;
+ *   · хід — три пронумеровані кроки з іконками;
+ *   · шанси кубиків — таблиця зі смужками ймовірності;
+ *   · обмін — драбина зі стрілками в обидва боки;
+ *   · хижаки — пари «хижак → кого краде → хто захищає».
+ *
+ * Числа беруться з конфіга, тож за зміни балансу текст не розійдеться з грою.
+ */
 export function RulesSheet({ onClose, tradesPerTurn = null, dicePreset = 'classic' }: RulesSheetProps) {
   const preset = DICE_PRESETS[dicePreset];
+  const one = countFaces(preset.one);
+  const two = countFaces(preset.two);
+  const maxOne = one[0]?.count ?? 1;
+  const maxTwo = two[0]?.count ?? 1;
+
   return (
     <Overlay variant="sheet" onClose={onClose} label="Правила гри">
       <div className="sheet">
         <div className="sheet__head">
-          <h2>📖 Правила гри</h2>
+          <h2>📖 Як грати</h2>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Закрити">
             ✕
           </button>
         </div>
 
-        <details className={styles.rule} open>
-          <summary className={styles.ruleSummary}>🎯 Мета гри</summary>
-          <p>
-            Обмінюючи тварин та розводячи їх, першим збери на фермі хоча б по одній: качці 🦆, козі 🐐, свині 🐖, коню
-            🐎 і корові 🐄. Лисиця та ведмідь заважатимуть — крастимуть тварин!
+        {/* ── Мета: п'ять іконок тварин, яких треба зібрати ── */}
+        <section className={styles.ruleCard}>
+          <h3 className={styles.ruleTitle}>🎯 Мета</h3>
+          <p className={styles.ruleLead}>
+            Збери на фермі хоча б по одній тварині кожного виду — і переможеш.
           </p>
-          <p>Для швидкого старту кожен гравець одразу отримує 1 качку.</p>
-        </details>
-
-        <details className={styles.rule}>
-          <summary className={styles.ruleSummary}>🔄 Хід гравця</summary>
-          <p>1. За бажанням зроби обміни — скільки потрібно (тільки до кидка).</p>
-          <p>2. Кинь кубики — гра сама порахує розмноження та напади хижаків.</p>
-          <p>3. Натисни «Завершити хід» — пристрій передається далі.</p>
-        </details>
-
-        <details className={styles.rule}>
-          <summary className={styles.ruleSummary}>🎲 Кубики та шанси</summary>
-          <p>🟦 Перший кубик</p>
-          <div className={styles.chances}>
-            {countFaces(preset.one).map((item) => (
-              <span key={item.face} className={styles.chance}>
-                {faceEmoji(item.face)} {item.count} · {item.percent}
-              </span>
+          <ul className={styles.goalRow}>
+            {SPECIES.map((species) => (
+              <li key={species} className={styles.goalItem}>
+                <Sprite
+                  src={ANIMAL_SPRITES[species]}
+                  emoji={ANIMALS[species].emoji}
+                  alt={ANIMALS[species].label}
+                  className={styles.goalFace}
+                />
+                <span>{ANIMALS[species].label}</span>
+              </li>
             ))}
-          </div>
-          <p>🟧 Другий кубик</p>
-          <div className={styles.chances}>
-            {countFaces(preset.two).map((item) => (
-              <span key={item.face} className={styles.chance}>
-                {faceEmoji(item.face)} {item.count} · {item.percent}
-              </span>
+          </ul>
+          <p className={styles.ruleNote}>
+            На старті кожен уже має одну качку — решту добуваєш обміном і розмноженням.
+          </p>
+        </section>
+
+        {/* ── Хід: три кроки ── */}
+        <section className={styles.ruleCard}>
+          <h3 className={styles.ruleTitle}>🔄 Хід гравця</h3>
+          <ol className={styles.steps}>
+            <Step n={1} icon="🔁">
+              За бажанням обміняйся —{' '}
+              {tradesPerTurn === null ? 'скільки завгодно разів' : `до ${tradesPerTurn} разів`}. Обмін
+              доступний <b>лише до кидка</b>.
+            </Step>
+            <Step n={2} icon="🎲">
+              Кинь кубики. Гра сама порахує, хто розмножився і чи прийшов хижак.
+            </Step>
+            <Step n={3} icon="✅">
+              Натисни «Завершити хід» — і передай телефон наступному.
+            </Step>
+          </ol>
+        </section>
+
+        {/* ── Кубики: шанси смужками ── */}
+        <section className={styles.ruleCard}>
+          <h3 className={styles.ruleTitle}>🎲 Кубики</h3>
+          <p className={styles.ruleLead}>
+            {preset.label}: {preset.hint}.
+          </p>
+
+          <h4 className={styles.chanceHead}>1-й кубик</h4>
+          <ul className={styles.chanceList}>
+            {one.map((item) => (
+              <ChanceRow key={item.face} item={item} max={maxOne} />
             ))}
-          </div>
-          <p>{preset.label}: {preset.hint}.</p>
-          <p>Корова випадає лише на першому кубику, кінь — лише на другому. Ведмідь — на першому, лисиця — на другому.</p>
-        </details>
+          </ul>
 
-        <details className={styles.rule}>
-          <summary className={styles.ruleSummary}>🐣 Розмноження</summary>
-          <p>
-            Кожен вид, що випав хоча б на одному кубику, розмножується: береш зі стада стільки тварин, скільки повних
-            пар вийде з (тварини на фермі + кількість кубиків з цим видом).
-          </p>
-          <p className={styles.example}>
-            <b>Приклад:</b> маєш 3 качки, випала 1 качка → 3+1=4 → 2 пари → береш 2 качки, стає 5. Види, яких на кубиках
-            не було, не розмножуються. Двох собак розводять лише через обмін.
-          </p>
-        </details>
-
-        <details className={styles.rule}>
-          <summary className={styles.ruleSummary}>🦊🐻 Хижаки та собаки</summary>
-          <p>
-            <b>🦊 Лисиця</b> — забирає у стадо ВСІХ твоїх качок і кіз.
-          </p>
-          <p>
-            <b>🐻 Ведмідь</b> — забирає ВСІХ твоїх свиней і коней.
-          </p>
-          <p>
-            Корову хижаки не чіпають. Малий пес 🐕 захищає від лисиці, великий 🐕‍🦺 — від ведмедя: тоді в стадо
-            повертається тільки пес, а тварини лишаються. Інший кубик рахується як звичайно.
-          </p>
-        </details>
-
-        <details className={styles.rule}>
-          <summary className={styles.ruleSummary}>🔁 Таблиця обміну</summary>
-          <div className={styles.ladder}>
-            {TRADE_LADDER.map((row) => (
-              <div key={`${row.a[0]}-${row.b[0]}`} className={styles.ladderItem}>
-                {ANIMALS[row.a[0]].emoji}×{row.a[1]} = {ANIMALS[row.b[0]].emoji}×{row.b[1]}
-              </div>
+          <h4 className={styles.chanceHead}>2-й кубик</h4>
+          <ul className={styles.chanceList}>
+            {two.map((item) => (
+              <ChanceRow key={item.face} item={item} max={maxTwo} />
             ))}
-          </div>
-          <p>
-            Обмін працює в обидва боки й лише перед кидком кубиків.{' '}
-            {tradesPerTurn === null
-              ? 'За хід можна зробити скільки завгодно обмінів — зручно, коли накопичилось багато тварин.'
-              : `За хід — не більше ${tradesPerTurn} ${tradesPerTurn === 1 ? 'обміну' : 'обмінів'}.`}{' '}
-            З іншим гравцем можна домовитись на будь-яких умовах усно. Два останні рядки (собаки) — орієнтовні.
-          </p>
-        </details>
+          </ul>
 
-        <details className={styles.rule}>
-          <summary className={styles.ruleSummary}>🏆 Кінець гри</summary>
-          <p>Перемагає той, хто першим матиме на фермі по одній тварині кожного з 5 видів.</p>
-        </details>
+          <p className={styles.ruleNote}>
+            Кубики різні: корова й ведмідь — лише на першому, кінь і лисиця — лише на другому.
+          </p>
+        </section>
+
+        {/* ── Розмноження з наочним прикладом ── */}
+        <section className={styles.ruleCard}>
+          <h3 className={styles.ruleTitle}>🐣 Розмноження</h3>
+          <p className={styles.ruleLead}>
+            Кожен вид, що випав хоч на одному кубику, дає приплід: скільки повних пар вийде з
+            (тварини у дворі + кількість граней).
+          </p>
+          <div className={styles.birthExample}>
+            <span className={styles.birthCol}>
+              <b>3</b>
+              <small>у дворі</small>
+            </span>
+            <span className={styles.birthOp}>+</span>
+            <span className={styles.birthCol}>
+              <b>1</b>
+              <small>з кубика</small>
+            </span>
+            <span className={styles.birthOp}>=</span>
+            <span className={styles.birthCol}>
+              <b>4</b>
+              <small>разом</small>
+            </span>
+            <span className={styles.birthOp}>→</span>
+            <span className={styles.birthCol}>
+              <b>+2</b>
+              <small>2 пари</small>
+            </span>
+          </div>
+          <p className={styles.ruleNote}>
+            Види, яких на кубиках не було, не розмножуються. Собак розводять лише через обмін.
+          </p>
+        </section>
+
+        {/* ── Хижаки: пари «хто краде — хто захищає» ── */}
+        <section className={styles.ruleCard}>
+          <h3 className={styles.ruleTitle}>🦊 Хижаки та захист</h3>
+          <ul className={styles.beastList}>
+            {(['fox', 'bear'] as const).map((face) => {
+              const beast = PREDATORS[face];
+              const guard = ANIMALS[beast.guard];
+              return (
+                <li key={face} className={styles.beastRow}>
+                  <span className={styles.beastSide}>
+                    <Face face={face} className={styles.beastFace} />
+                    <b>{beast.label}</b>
+                  </span>
+                  <span className={styles.beastArrow} aria-hidden>
+                    забирає
+                  </span>
+                  <span className={styles.beastSide}>
+                    {beast.steals.map((key) => (
+                      <Sprite
+                        key={key}
+                        src={ANIMAL_SPRITES[key]}
+                        emoji={ANIMALS[key].emoji}
+                        alt={ANIMALS[key].label}
+                        className={styles.beastPrey}
+                      />
+                    ))}
+                  </span>
+                  <span className={styles.beastGuard}>
+                    <Sprite
+                      src={ANIMAL_SPRITES[beast.guard]}
+                      emoji={guard.emoji}
+                      alt={guard.label}
+                      className={styles.beastFace}
+                    />
+                    <small>{guard.label} відганяє</small>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <p className={styles.ruleNote}>
+            Хижак забирає <b>усіх</b> тварин цих видів, а не одну. Корову не чіпають. Коли пес у
+            дворі й є кого захищати — тварини лишаються, а пес повертається в стадо. Якщо у дворі
+            самий пес і більше нічого — він лишається: захищати нікого.
+          </p>
+        </section>
+
+        {/* ── Драбина обміну ── */}
+        <section className={styles.ruleCard}>
+          <h3 className={styles.ruleTitle}>🔁 Обмін</h3>
+          <ul className={styles.ladderRow}>
+            {TRADE_LADDER.map((row, index) => (
+              <li
+                key={`${row.a[0]}-${row.b[0]}`}
+                /* Останні два рядки — обмін на собак: він орієнтовний, тож
+                   позначаємо це прямо в рядку, а не лише приміткою внизу. */
+                data-soft={index >= TRADE_LADDER.length - 2 ? 'true' : undefined}
+                className={styles.ladderStep}
+              >
+                <span className={styles.ladderSide}>
+                  <Sprite
+                    src={ANIMAL_SPRITES[row.a[0]]}
+                    emoji={ANIMALS[row.a[0]].emoji}
+                    alt={ANIMALS[row.a[0]].label}
+                    className={styles.ladderFace}
+                  />
+                  <b>×{row.a[1]}</b>
+                </span>
+                <span className={styles.ladderEq} aria-hidden>
+                  ⇄
+                </span>
+                <span className={styles.ladderSide}>
+                  <Sprite
+                    src={ANIMAL_SPRITES[row.b[0]]}
+                    emoji={ANIMALS[row.b[0]].emoji}
+                    alt={ANIMALS[row.b[0]].label}
+                    className={styles.ladderFace}
+                  />
+                  <b>×{row.b[1]}</b>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className={styles.ruleNote}>
+            Обмін працює в обидва боки. Два останні рядки (собаки) — орієнтовні, з іншим гравцем
+            можна домовитись усно на будь-яких умовах.
+          </p>
+        </section>
 
         <Button variant="gold" block onClick={onClose}>
           Зрозуміло, граємо!

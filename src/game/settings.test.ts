@@ -169,13 +169,28 @@ describe('налаштування (sanitizeSettings)', () => {
   });
 
   it('rulesOf вирізає саме правила', () => {
-    const full = sanitizeSettings({ tradesPerTurn: 2, predatorMode: 'off', dicePreset: 'calm', balance: 'compact' });
+    const full = sanitizeSettings({
+      tradesPerTurn: 2,
+      predatorMode: 'off',
+      dicePreset: 'calm',
+      balance: 'compact',
+      startDuck: false,
+    });
     expect(rulesOf(full)).toEqual({
       tradesPerTurn: 2,
       predatorMode: 'off',
       dicePreset: 'calm',
       balance: 'compact',
+      startDuck: false,
     });
+  });
+
+  it('старі збереження без startDuck отримують качку на старті', () => {
+    // Поле з'явилось пізніше: у збереженні його немає, тож має підставитись
+    // типове значення, а не undefined (інакше качка зникла б у всіх старих
+    // партіях без жодного попередження).
+    const old = sanitizeSettings({ tradesPerTurn: 1, balance: 'classic' });
+    expect(old.startDuck).toBe(true);
   });
 
   it('усі ефекти увімкнені за замовчуванням', () => {

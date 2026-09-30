@@ -57,8 +57,13 @@ export function createGame(names: string[], rules: GameRules = DEFAULT_RULES): G
 
   const players: Player[] = names.map((raw, index) => {
     const farm = emptyFarm();
-    // Кожен гравець отримує одну качку зі стада «на щастя».
-    if (herd.duck > 0) {
+    /*
+     * Стартова качка: дає перший хід без глухого кута — без неї гравець може
+     * кілька ходів нічого не отримувати, поки не випаде качка на кубику.
+     * Вмикається в налаштуваннях; качка береться зі спільного стада, а не
+     * з'являється «з повітря».
+     */
+    if (rules.startDuck && herd.duck > 0) {
       farm.duck = 1;
       herd.duck -= 1;
     }
