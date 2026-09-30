@@ -327,12 +327,23 @@ async function main() {
     })()
   `);
   console.log(`  текст модалки: ${modalText.replace(/\s+/g, ' ').slice(0, 160)}`);
+  // Спрайт — це <img>, коли файл доступний (Sprite.tsx), і <span> з емодзі лише
+  // у фолбеку. Тому читаємо і alt, і текст: детектор не має залежати від того,
+  // завантажився спрайт чи ні.
   const faces = await session.eval(`
-    [...document.querySelectorAll('[class*="_face_"] span, [class*="_die_"] span')]
-      .map((el) => el.textContent.trim())
-      .filter(Boolean)
+    (() => {
+      const dice = [...document.querySelectorAll('[class*="_face_"], [class*="_die_"]')];
+      return dice
+        .map((el) => {
+          const img = el.querySelector('img');
+          if (img) return img.getAttribute('alt') || img.getAttribute('src') || '';
+          return el.textContent.trim();
+        })
+        .filter(Boolean);
+    })()
   `);
   console.log(`  грані кубиків у UI: ${JSON.stringify(faces)}`);
+  check('грані кубиків показані в UI', faces.length >= 2, JSON.stringify(faces));
   shots.push(await session.shoot(`${OUT_DIR}/settings-off-roll.png`));
 
   const farmAfterModal = await session.eval(`

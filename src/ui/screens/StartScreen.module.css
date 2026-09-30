@@ -117,7 +117,7 @@
   border-radius: 20px;
   background:
     repeating-linear-gradient(93deg, rgba(0, 0, 0, 0.06) 0 4px, transparent 4px 11px),
-    linear-gradient(#b5834a, #7d5228);
+    linear-gradient(#855533, #66421f);
   box-shadow:
     0 10px 22px rgba(20, 30, 8, 0.35),
     inset 0 2px 0 rgba(255, 255, 255, 0.28);
@@ -147,12 +147,13 @@
 
 .title {
   margin: 0;
+  /* На дерев'яній вивісці (#855533→#66421f) світлий текст дає 5.75/8.13 —
+     вивіска трохи темніша за початкову, зате заголовок читається і в темній
+     темі, де попередній #fff4dc зникав. */
   color: #fff4dc;
   font-size: clamp(1.9rem, 8.5vw, 2.7rem);
   letter-spacing: 0.01em;
-  text-shadow:
-    0 2px 0 #6b3f18,
-    0 4px 10px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 2px 0 rgba(60, 30, 8, 0.55);
 }
 
 .tagline {
@@ -191,7 +192,10 @@
 .loadingBar {
   position: absolute;
   inset: 0 auto 0 0;
-  background: linear-gradient(#a4d96b, var(--leaf));
+  /* Темніше за попередній #a4d96b: на світло-зеленому жоден варіант тексту не
+     давав AA (білий 1.59, чорний — лише на світлому краю). Ці кінці тримають
+     4.6–6.4 зі світлим текстом і не залежать від темної теми. */
+  background: linear-gradient(#3d7d31, #24521a);
   transition: width 0.25s ease;
 }
 
@@ -200,10 +204,11 @@
   display: grid;
   place-items: center;
   height: 100%;
-  color: #fffbe9;
+  /* Світлий текст: 4.96 на верхньому кінці, 9.02 на нижньому. */
+  color: #fbfff5;
   font-size: 0.72rem;
   font-weight: 800;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 /* ── Картка «продовжити партію» ── */
