@@ -260,8 +260,8 @@
  */
 .raidRunSprite {
   display: block;
-  width: clamp(64px, 6.4vw, 120px);
-  height: clamp(64px, 6.4vw, 120px);
+  width: clamp(70px, 6.9vw, 128px);
+  height: clamp(70px, 6.9vw, 128px);
   object-fit: contain;
   filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.4));
 }
@@ -289,15 +289,15 @@
 
 .mobileRaidSprite {
   display: block;
-  width: 76px;
-  height: 76px;
+  width: 78px;
+  height: 78px;
   object-fit: contain;
   filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.4));
 }
 
 .mobileRaid--bear .mobileRaidSprite {
-  width: 96px;
-  height: 96px;
+  width: 100px;
+  height: 100px;
 }
 
 /*
@@ -407,8 +407,8 @@
 
 /* Ведмідь більший за лисицю — так і має бути. */
 .raidRun--bear .raidRunSprite {
-  width: clamp(80px, 7.6vw, 146px);
-  height: clamp(80px, 7.6vw, 146px);
+  width: clamp(88px, 8.4vw, 156px);
+  height: clamp(88px, 8.4vw, 156px);
 }
 
 /*

@@ -42,7 +42,7 @@ export function RaidRun({ event, deltaKey }: RaidRunProps) {
   });
 
   // Якщо стрічки кадрів немає — `WalkToken` покаже статичний спрайт.
-  const walkVars = WALK_SHEETS[raider] ? raidWalkVars() : {};
+  const walkVars = WALK_SHEETS[raider] ? raidWalkVars(raider) : {};
 
   return (
     <span
@@ -84,7 +84,7 @@ export function MobileRaid({
   if (!raider) return null;
 
   const meta = PREDATORS[raider];
-  const walkVars = WALK_SHEETS[raider] ? raidWalkVars() : {};
+  const walkVars = WALK_SHEETS[raider] ? raidWalkVars(raider) : {};
 
   return (
     <span

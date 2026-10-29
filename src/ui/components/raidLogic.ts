@@ -68,9 +68,14 @@ export function raidPath(raider: 'fox' | 'bear'): { x: number; y: number }[] {
  * Темп 0.4 с на цикл — швидше за тварин у дворі (там 1–3 с): хижак БІЖИТЬ,
  * а не пасеться. Шість кадрів за 0.4 с дають плавний біг, не мерехтіння.
  */
-export function raidWalkVars(): Record<string, string> {
+export function raidWalkVars(raider: 'fox' | 'bear' = 'fox'): Record<string, string> {
   return {
-    ['--walk-dur' as string]: '0.4s',
+    /*
+     * Темп кроку різний за звіром: ведмідь важкий і перевалюється повільніше
+     * (0.55 с на цикл), лисиця дріботіть швидко (0.36 с). Спільні 0.4 с
+     * робили ведмедя метушливим, а лисицю — загальмованою.
+     */
+    ['--walk-dur' as string]: raider === 'bear' ? '0.55s' : '0.36s',
     ['--delay' as string]: '-0.15s',
     ['--waddle' as string]: '3deg',
     ['--flip' as string]: '-1',
