@@ -3,10 +3,8 @@ import { ANIMALS, DECOR, HERD_KEYS, SPRITE_SCALE, ZONES } from '../../game/confi
 import type { DecorPlacement, ZoneLayout } from '../../game/config';
 import type { GameEvent, GameState, HerdKey } from '../../game/types';
 import { cn } from '../../lib/cn';
-import { motionFor } from '../lib/motion';
 import { RaidRun } from './RaidRun';
 import { Sprite } from './Sprite';
-import { WalkToken } from './WalkToken';
 import styles from './BoardScene.module.css';
 
 interface BoardSceneProps {
@@ -88,7 +86,6 @@ export function BoardScene({
           const zone = zoneMap[key];
           const meta = ANIMALS[key];
           const count = farm ? farm[key] : 0;
-          const shown = Math.min(count, zone.cap);
           const event = events.find((item) => item.subject === key);
           const delta = deltas[key];
 
@@ -142,56 +139,47 @@ export function BoardScene({
                 </span>
               )}
 
+              {/*
+               * ОДНА статична тварина на двір — та сама, що на телефоні.
+               *
+               * Було: до `zone.cap` крихітних спрайтів, які ще й «переступали»
+               * кадрами ходи. На великій карті це читалось як метушня: замість
+               * «у дворі дві свині» око бачило двох мультяшних комах, а хода
+               * додавала руху там, де його ніхто не просив.
+               *
+               * Тепер у загоні стоїть один спокійний спрайт — рівно як у
+               * плитці двору на телефоні, — а кількість показує табличка
+               * `×N` (і кошик стада). Щойно тварина прибула, вона «вистрибує»
+               * на своє місце (`.arrive`), тож видно саме факт появи.
+               */}
               <span
-                className={cn(
-                  styles.tokens,
-                  SPRITE_SCALE[key] > 1 && styles.tokensCentered,
-                  // Дрібні види стоять щільніше: качки — купкою, кози й свині
-                  // — щільним гуртом із невеликим просвітом (спрайт більший).
-                  SPRITE_SCALE[key] < 1.3 && styles.tokensTight,
-                  (key === 'goat' || key === 'pig') && styles.tokensSnug,
-                )}
+                className={styles.herd}
                 style={{
                   top: `${zone.tokens[0]}%`,
                   right: `${zone.tokens[1]}%`,
                   bottom: `${zone.tokens[2]}%`,
                   left: `${zone.tokens[3]}%`,
-                  // Спрайт пса на арті дрібніший — масштаб задаємо за видом.
+                  // Масштаб за видом — той самий, що задавав розмір спрайта
+                  // в колишній сітці (див. SPRITE_SCALE у config.ts).
                   ['--scale' as string]: SPRITE_SCALE[key],
                 }}
               >
-                {Array.from({ length: shown }, (_, index) => {
-                  const motion = motionFor(key, index);
-                  const fresh = delta ? index >= shown - delta : false;
-                  const leaving = !!delta && delta < 0;
-                  return (
-                    <span
-                      key={`${key}-${index}`}
-                      className={cn(styles.slot, fresh && styles.arrive, leaving && styles.leave)}
-                      style={motion.vars}
-                    >
-                      <WalkToken
-                        species={key}
-                        emoji={meta.emoji}
-                        vars={motion.vars}
-                        className={styles.token}
-                        // Малий пес має стояти вихідним спрайтом: кадри з аркуша
-                        // намальовані в іншому стилі й вибивались із карти.
-                        staticSprite={key === 'sdog'}
-                      />
-                    </span>
-                  );
-                })}
-                {count > shown && <span className={styles.more}>+{count - shown}</span>}
+                {event?.kind === 'gain' && (
+                  <span key={`hearts-${deltaKey}`} className={styles.hearts} aria-hidden>
+                    <span>💚</span>
+                    <span>💛</span>
+                    <span>💚</span>
+                  </span>
+                )}
+                {count > 0 && (
+                  <Sprite
+                    src={ANIMAL_SPRITES[key]}
+                    emoji={meta.emoji}
+                    alt=""
+                    className={cn(styles.animal, delta !== undefined && delta > 0 && styles.arrive)}
+                  />
+                )}
               </span>
-
-              {event?.kind === 'gain' && (
-                <span key={`hearts-${deltaKey}`} className={styles.hearts} aria-hidden>
-                  <span>💚</span>
-                  <span>💛</span>
-                  <span>💚</span>
-                </span>
-              )}
 
               <span className={styles.sign}>
                 <b>{meta.plural}</b>

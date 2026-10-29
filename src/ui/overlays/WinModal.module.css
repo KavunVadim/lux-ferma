@@ -210,8 +210,8 @@
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 7px;
-  padding: 5px 10px 5px 8px;
+  gap: 6px;
+  padding: 5px 8px;
   border: 2px solid color-mix(in srgb, var(--wood) 45%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--gold) 14%, transparent);
@@ -226,7 +226,7 @@
   min-width: 0;
   flex: 1 1 auto;
   overflow: hidden;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 900;
   text-align: left;
   text-overflow: ellipsis;
@@ -254,8 +254,8 @@
 
 .awardValue {
   flex: none;
-  min-width: 20px;
-  padding: 1px 6px;
+  min-width: 18px;
+  padding: 1px 5px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ink) 10%, transparent);
   font-size: 0.74rem;

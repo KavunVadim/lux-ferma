@@ -91,166 +91,39 @@
  * щоб виглядало як справжній пташиний двір; великі отримують нормальний
  * проміжок, бо інакше налазять одна на одну.
  */
-.tokens {
-  --gap: max(1.45em, 25%);
+/*
+ * ТВАРИНА У ДВОРІ — одна, статична, як на телефоні.
+ *
+ * Ділянку задають `zone.tokens` у відсотках від загону (та сама вільна
+ * земля, де раніше стояла сітка спрайтів). Усередині — один спрайт,
+ * притиснутий до низу: тварина «стоїть на землі», а не висить у повітрі.
+ *
+ * Розмір = 2.35em × видовий масштаб. Базова комірка була 1.45em під сітку
+ * з кількох фігурок; для однієї тварини її збільшено, інакше качка
+ * губилась у великому загоні.
+ */
+.herd {
   position: absolute;
   display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 2px;
-  column-gap: var(--gap);
+  align-items: flex-end;
+  justify-content: center;
   pointer-events: none;
   font-size: clamp(16px, 1.7vw, 34px);
 }
 
-/* Качки — щільна купка: відступ усього 20% комірки. */
-.tokensTight {
-  --gap: 0.2em;
+.animal {
+  width: calc(2.35em * var(--scale, 1));
+  height: calc(2.35em * var(--scale, 1));
+  object-fit: contain;
+  object-position: bottom center;
+  transform-origin: 50% 90%;
+  /* М'яка тінь під ногами: спрайт не «наклеєний» на траву. */
+  filter: drop-shadow(0 6px 4px rgba(20, 30, 8, 0.28));
 }
-
-/*
- * Кози й свині — теж кучніше, але не так тісно, як качки: спрайт більший,
- * тому при відступі 0.2em сусіди налазили б одна на одну. 0.5em дає щільний
- * гурт із невеликим просвітом.
- */
-.tokensSnug {
-  --gap: 0.5em;
-}
-
-/*
- * Для видів зі збільшеним спрайтом (пси, кінь, корова — SPRITE_SCALE > 1)
- * тварини стоять ОДНИМ рядом по центру своєї ділянки. Переносити на другий
- * рядок не можна: великий спрайт (корова 135px) виштовхував сусіда за тин —
- * або вниз, або (з вирівнюванням до низу) аж на газон перед будинком.
- * Вилазить за ділянку — так, але симетрично й усередину загону, який значно більший.
- */
-.tokensCentered {
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: center;
-}
-
-/*
- * Тварини СТОЯТЬ на своїх місцях. Ходу по двору прибрано навмисно: рух на всю
- * ширину загону виглядав гірше за спокійну ферму. Лишається тільки цикл кадрів
- * ходи на місці (ніби тварина переступає лапами) — він додає життя, але нікого
- * переносить по двору.
- */
-.slot {
-  position: relative;
-  display: inline-flex;
-  /*
-   * 1.45em — базова комірка, `--scale` — видовий масштаб (див. SPRITE_SCALE
-   * у config.ts).
-   */
-  width: calc(1.45em * var(--scale, 1));
-  height: calc(1.45em * var(--scale, 1));
-  /* Без цього флекс стискає великі спрайти, коли ряд не влазить у ділянку. */
-  flex: none;
-}
-
-/*
- * Кадри ходи на місці: тварина «переступає», не рухаючись по двору.
- * Дистанція (--dx) більше не використовується — лишилась у змінних, щоб не
- * чіпати motionFor.
- */
-
-/*
- * Кадри ходи на місці: тварина «переступає», не рухаючись по двору.
- * Дистанція (--dx) більше не використовується — лишилась у змінних, щоб не
- * чіпати motionFor.
- */
-
-/*
- * Погойдування тіла + «перевальцем»: БЕЗ вертикальної складової. Будь-який
- * translateY читався як підстрибування, а тварини мають просто переступати.
- * Лишається легкий нахил — він дає відчуття кроку, не рухаючи тіло вгору.
- */
-
-
-
-/* Відпочиваючі не курять — їм пил не потрібен. */
-
-
-.token {
-  width: 100%;
-  height: 100%;
-  transform-origin: 50% 85%;
-  /* Кадри стрічки переступають на місці; рух по двору прибрано навмисно. */
-  animation: walk-sway var(--walk-dur, 0.9s) ease-in-out var(--delay, 0s) infinite;
-}
-
-/*
- * Погойдування «перевальцем»: тільки нахил. Вертикальної складової немає — будь-
- * який translateY читався як підстрибування, а тварини мають просто переступати.
- */
-@keyframes walk-sway {
-  0%,
-  50%,
-  100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(var(--waddle, 0deg));
-  }
-  75% {
-    transform: rotate(calc(-0.6 * var(--waddle, 0deg)));
-  }
-}
-
-/* ── Хода: спрайт-лист зі скрипта build-atlas.mjs ── */
-
-.walker {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-/*
- * Стрічка кадрів: одна комірка квадратна, тому крок `--frames` × 100%
- * (100% = ширина контейнера) показує рівно наступний кадр.
- */
-.walkStrip {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: auto;
-  animation: walk-strip var(--walk-dur) steps(var(--frames)) var(--delay) infinite;
-}
-
-@keyframes walk-strip {
-  from {
-    left: 0;
-  }
-  to {
-    left: calc(-1 * var(--frames) * 100%);
-  }
-}
-
-/* Пасуться: кілька кроків у різні боки з нахилом. */
-/*
- * Хода вже стоїть на `.slot` (там її ніщо не компенсує). Цей клас лишається
- * порожнім навмисно: якщо повісити анімацію і тут, і на комірці, вони
- * перекриють одна одну (у `.slot` і `.token` однакова специфічність).
- */
-.wander {
-  animation: none;
-}
-
-
-
 
 /* Прибуття: тварина «вистрибує» у двір. */
 .arrive {
   animation: up-arrive 0.7s cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
-}
-
-/* Втеча: хижак тягне тварину за межі двору. */
-.leave {
-  animation: up-leave 0.9s ease-in both;
 }
 
 /* ── Хижак ── */
@@ -677,57 +550,43 @@
   color: #ffc0b4;
 }
 
-.more {
-  align-self: center;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.5);
-  color: #fff;
-  font-size: 0.66em;
-  font-weight: 800;
-}
-
 /* ── Сердечка при народженні ── */
 
+/*
+ * Сердечка летять ВІД ТВАРИНИ, а не від верхнього краю загону: раніше вони
+ * вистрибували просто на дерев'яній табличці й закривали `×N` — саме те
+ * число, яке в момент появи тварини найважливіше.
+ */
 .hearts {
   position: absolute;
-  left: 50%;
-  top: 4%;
+  right: 0;
+  bottom: calc(100% - 0.35em);
+  left: 0;
   z-index: 11;
   display: flex;
+  justify-content: center;
   gap: 4px;
-  font-size: clamp(19px, 1.8vw, 34px);
+  font-size: clamp(14px, 1.3vw, 24px);
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.55));
   pointer-events: none;
-  animation: hearts-up 2.3s ease-out both;
+  animation: hearts-rise 1.5s ease-out both;
 }
 
-.hearts span:nth-child(2) {
-  animation-delay: 0.15s;
-}
-
-.hearts span:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
-@keyframes hearts-up {
+@keyframes hearts-rise {
   0% {
     opacity: 0;
-    transform: translate(-50%, 25%) scale(0.45);
+    transform: translateY(4px) scale(0.7);
   }
-  14% {
+  25% {
     opacity: 1;
-    transform: translate(-50%, 0) scale(1.12);
-  }
-  55% {
-    opacity: 1;
-    transform: translate(-50%, -55%) scale(1);
+    transform: translateY(-6px) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -145%) scale(0.95);
+    transform: translateY(-52px) scale(1.05);
   }
 }
+
 
 /* ── Перемикання карти на новому ході ── */
 
@@ -772,19 +631,6 @@
   }
 }
 
-@keyframes up-leave {
-  0% {
-    opacity: 1;
-    transform: none;
-  }
-  30% {
-    transform: translate3d(-10%, -8%, 0) scale(1.05) rotate(-6deg);
-  }
-  100% {
-    opacity: 0;
-    transform: translate3d(-70%, -150%, 0) scale(0.35) rotate(-28deg);
-  }
-}
 
 @keyframes raid-in {
   0% {
@@ -875,11 +721,9 @@
 
 /* Повага до системних налаштувань: без руху, але все лишається читабельним. */
 @media (prefers-reduced-motion: reduce) {
-  .wander,
   .graze,
   .hop,
   .arrive,
-  .leave,
   .raider,
   .delta {
     animation: none;
@@ -928,7 +772,6 @@
  * `will-change` свідомо НЕ вішаємо на десятки токенів: кожен стає окремим
  * шаром GPU, а на слабких машинах шари витісняються і спрайти блимають.
  */
-.wander,
 .graze,
 .hop,
 .raider {
@@ -937,10 +780,10 @@
 
 /*
  * `contain: paint` сюди НЕ ставимо: він обрізав би пил і кроки тварин на межах
- * комірки. Тримаємо layout+style — цього досить, щоб браузер не перераховував
+ * загону. Тримаємо layout+style — цього досить, щоб браузер не перераховував
  * розкладку сусідніх загонів.
  */
-.slot {
+.zone {
   contain: layout style;
 }
 
