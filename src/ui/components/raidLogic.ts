@@ -39,8 +39,18 @@ export function shouldShowRaid(events: readonly GameEvent[]): GameEvent | undefi
 export function raidPath(raider: 'fox' | 'bear'): { x: number; y: number }[] {
   const stops = PREDATORS[raider].steals.map((key) => {
     const zone = ZONES[key];
-    // Точка зупинки — центр загону: там хижак «стоїть над» тваринами.
-    return { x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 };
+    /*
+     * Точка зупинки — центр ДІЛЯНКИ ТВАРИН (`zone.tokens`), а не всього загону.
+     *
+     * Центр загону качок припадає на СЕРЕДИНУ СТАВКА: лисиця зупинялась
+     * посеред води й «стояла» на ній. Ділянка `tokens` — те місце, де стоять
+     * спрайти тварин (нижня частина загону, на землі), тож хижак тепер
+     * виходить саме до них, а не плаває.
+     */
+    const [top, right, bottom, left] = zone.tokens;
+    const x = left + (100 - left - right) / 2;
+    const y = top + (100 - top - bottom) / 2;
+    return { x: zone.x + (zone.w * x) / 100, y: zone.y + (zone.h * y) / 100 };
   });
   // Втеча: за правий край карти, за межі поля (там ліс).
   return [...stops, { x: -12, y: stops[0]?.y ?? 20 }];
