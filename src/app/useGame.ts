@@ -37,6 +37,14 @@ export const ROLL_DURATION = ROLL_TICKS * ROLL_TICK_MS;
 const RESULT_DELAY = 520;
 /** Скільки живуть бейджі +N/−N. */
 const DELTA_LIFETIME = 1800;
+/**
+ * Скільки живе ДЕМО набігу (кнопки в «Налаштуваннях»).
+ *
+ * Анімація хижака триває 3.5 с на ПК і 3.6 с на телефоні, плюс на телефоні
+ * ~0.9 с іде замір плиток, перш ніж він стартує. Якщо прибирати подію разом
+ * із бейджами (1.8 с), ведмідь зникає на півдорозі — саме те, на що скаржились.
+ */
+const RAID_PREVIEW_LIFETIME = 4800;
 const TOAST_LIFETIME = 1900;
 /** Скільки ходів можна відкотити кнопкою «Скасувати». */
 const UNDO_LIMIT = 12;
@@ -441,7 +449,7 @@ export function useGame(): GameApi {
       setDeltaKey((value) => value + 1);
       sound.play('raid');
       haptic('heavy');
-      later(DELTA_LIFETIME, () => {
+      later(RAID_PREVIEW_LIFETIME, () => {
         setEvents([]);
         setDeltas({});
       });
