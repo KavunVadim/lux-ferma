@@ -15,6 +15,8 @@ import { PlayerRail } from '../components/PlayerRail';
 import { Scoreboard } from '../components/Scoreboard';
 import { TopBar } from '../components/TopBar';
 import { TurnBanner } from '../components/TurnBanner';
+import { CoachMark } from '../onboarding/CoachMark';
+import { TOUR_EVENT, finishTour, isTourDone, type TourStep } from '../onboarding/tour';
 import { ConfirmModal } from '../overlays/ConfirmModal';
 import { HandoffOverlay } from '../overlays/HandoffOverlay';
 import { Overlay } from '../overlays/Overlay';
@@ -172,6 +174,29 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
     mobileRaid?.raider ?? null,
     game.deltaKey,
   );
+
+  /*
+   * ПІДКАЗКИ ПЕРШОГО ХОДУ. Стан живе тут, бо саме цей екран знає, чи вже
+   * кинуто кубики: «Крок 1» — до кидка, «Крок 2» — після результату.
+   */
+  const [tour, setTour] = useState<TourStep | null>(() => (isTourDone() ? null : 'roll'));
+  const rolledNow = !!state?.rolled;
+
+  useEffect(() => {
+    if (tour === 'roll' && rolledNow) setTour('end');
+    else if (tour === 'end' && !rolledNow) {
+      // Хід завершено — новачок пройшов обидва кроки, більше не підказуємо.
+      finishTour();
+      setTour(null);
+    }
+  }, [tour, rolledNow]);
+
+  // «Налаштування → Показати підказки знову» — показуємо тур одразу.
+  useEffect(() => {
+    const onRequest = () => setTour(rolledNow ? 'end' : 'roll');
+    window.addEventListener(TOUR_EVENT, onRequest);
+    return () => window.removeEventListener(TOUR_EVENT, onRequest);
+  }, [rolledNow]);
 
   const finishedNow = !!state?.over && !game.result;
   useEffect(() => {
@@ -376,6 +401,20 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
           />
         </>
       )}
+
+      {tour &&
+        !game.handoff &&
+        !game.result &&
+        !game.rolling &&
+        (tour === 'roll' ? !state.rolled : state.rolled) && (
+          <CoachMark
+            step={tour}
+            onSkip={() => {
+              finishTour();
+              setTour(null);
+            }}
+          />
+        )}
 
       {tradeOpen && !state.over && (
         <TradeSheet

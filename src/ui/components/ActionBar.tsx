@@ -57,11 +57,25 @@ export function ActionBar({
       </Button>
 
       {state.rolled ? (
-        <Button variant="green" pulse disabled={busy || finished} onClick={onEndTurn} className={styles.main}>
+        <Button
+          variant="green"
+          pulse
+          disabled={busy || finished}
+          onClick={onEndTurn}
+          className={styles.main}
+          data-coach="end"
+        >
           ✅ Завершити хід
         </Button>
       ) : (
-        <Button variant="barn" pulse disabled={busy || finished} onClick={onRoll} className={styles.main}>
+        <Button
+          variant="barn"
+          pulse
+          disabled={busy || finished}
+          onClick={onRoll}
+          className={styles.main}
+          data-coach="roll"
+        >
           🎲 Кинути кубики
         </Button>
       )}

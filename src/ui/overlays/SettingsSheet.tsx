@@ -6,6 +6,7 @@ import { BALANCE_PRESETS, EFFECT_LABELS } from '../../game/settings';
 import type { AppSettings, ThemeMode } from '../../game/settings';
 import { cn } from '../../lib/cn';
 import { Button } from '../components/Button';
+import { resetTour } from '../onboarding/tour';
 import { Overlay } from './Overlay';
 import styles from './Overlays.module.css';
 
@@ -373,6 +374,27 @@ export function SettingsSheet({
             </div>
           </section>
         )}
+
+        <section className={styles.settingGroup}>
+          <header>
+            <b>💡 Підказки</b>
+          </header>
+          <p className={styles.settingHint}>
+            Першу партію гра проводить за руку: підсвічує «Кинути кубики», а потім «Завершити хід»
+            й коротко пояснює, що буде. Далі підказки більше не з'являються.
+          </p>
+          <button
+            type="button"
+            className={styles.soundTest}
+            onClick={() => {
+              resetTour();
+              onClose();
+            }}
+          >
+            💡 Показати підказки знову
+            <span>з'являться у грі, щойно закриєш налаштування</span>
+          </button>
+        </section>
 
         <div className={styles.settingsFooter}>
           <Button variant="ghost" small onClick={onReset}>

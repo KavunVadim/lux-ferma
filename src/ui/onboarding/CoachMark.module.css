@@ -1,0 +1,132 @@
+/* Підказка першого ходу: підсвітка кнопки + бульбашка з поясненням. */
+
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+}
+
+/*
+ * Кільце навколо кнопки. `pointer-events: none` — грати можна одразу,
+ * підказка не перехоплює жодного кліку.
+ */
+.ring {
+  position: fixed;
+  border: 3px solid #ffd76a;
+  border-radius: 22px;
+  box-shadow:
+    0 0 0 4px rgba(255, 215, 106, 0.35),
+    0 0 26px rgba(255, 199, 60, 0.85);
+  animation: ring-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes ring-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 4px rgba(255, 215, 106, 0.3),
+      0 0 18px rgba(255, 199, 60, 0.7);
+  }
+  50% {
+    box-shadow:
+      0 0 0 7px rgba(255, 215, 106, 0.45),
+      0 0 34px rgba(255, 199, 60, 0.95);
+  }
+}
+
+.bubble {
+  position: fixed;
+  padding: 12px 34px 14px 14px;
+  border: 3px solid var(--wood);
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow:
+    0 6px 0 color-mix(in srgb, var(--wood-dark) 45%, transparent),
+    0 16px 36px rgba(20, 12, 4, 0.32);
+  text-align: left;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  animation: bubble-in 0.35s cubic-bezier(0.2, 1.35, 0.4, 1);
+}
+
+/* Стрілка вниз — показує, до якої саме кнопки веде підказка. */
+.arrow {
+  position: absolute;
+  bottom: -11px;
+  left: var(--arrow-left, 50%);
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  border-right: 3px solid var(--wood);
+  border-bottom: 3px solid var(--wood);
+  background: var(--card);
+  transform: rotate(45deg);
+  border-radius: 0 0 4px 0;
+}
+
+.step {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ink-soft);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.text {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.close:hover {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring,
+  .bubble {
+    animation: none;
+  }
+}
