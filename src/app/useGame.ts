@@ -103,6 +103,8 @@ export interface GameApi {
   /** Повертає типові налаштування. */
   resetSettings: () => void;
   reset: () => void;
+  /** Реванш тією самою компанією — без повернення на стартовий екран. */
+  rematch: () => void;
 }
 
 function titleFor(outcome: RollOutcome): string {
@@ -274,6 +276,19 @@ export function useGame(): GameApi {
     toStart();
     setHasSave(false);
   }, [toStart]);
+
+  /**
+   * РЕВАНШ: та сама компанія, чисті двори — без повернення на стартовий екран.
+   *
+   * Після фіналу гравці майже завжди хочуть «ще одну». Ведення їх назад у
+   * меню, де треба знову вибрати кількість гравців і вписати імена, — це
+   * втрачений вечір і зайвий привід закрити застосунок.
+   */
+  const rematch = useCallback(() => {
+    const current = stateRef.current;
+    if (!current) return;
+    start(current.players.map((player) => player.name));
+  }, [start]);
 
   const roll = useCallback(() => {
     const current = stateRef.current;
@@ -469,5 +484,6 @@ export function useGame(): GameApi {
     updateSettings,
     resetSettings: () => updateSettings(DEFAULT_SETTINGS),
     reset,
+    rematch,
   };
 }

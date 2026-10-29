@@ -1715,7 +1715,9 @@
 .confettiWrap {
   position: fixed;
   inset: 0;
-  z-index: 95;
+  /* Нижче за затемнення оверлея (60): конфеті — це фон свята, а не перешкода
+     між гравцем і результатом. Раніше z-index 95 клав їх ПОВЕРХ картки. */
+  z-index: 59;
   overflow: hidden;
   pointer-events: none;
 }

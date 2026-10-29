@@ -228,10 +228,44 @@
   bottom: calc(var(--safe-bottom) + 12px);
   left: calc(var(--safe-left) + 16px);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 14px;
   pointer-events: none;
+}
+
+/*
+ * «ДОК» — спільна панель керування внизу поля: гравці + дії.
+ *
+ * Раніше чипси гравців, кнопки й вивіска лежали на траві окремими плямами:
+ * око не бачило, що це одна панель. Тепер під ними напівпрозора темна
+ * підкладка з мʼяким розмиттям — як HUD у настільних іграх. Тло свідомо
+ * нейтральне: загони з тваринами лишаються кольоровими.
+ */
+.dock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 2px solid rgba(255, 240, 210, 0.18);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(30, 21, 10, 0.56), rgba(18, 12, 5, 0.72));
+  box-shadow:
+    0 10px 28px rgba(10, 16, 4, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(7px) saturate(1.1);
+}
+
+@media (max-width: 1279px) {
+  .dock {
+    gap: 8px;
+    padding: 6px 8px;
+  }
+
+  .tray {
+    width: min(360px, 34vw);
+  }
 }
 
 .footer > * {

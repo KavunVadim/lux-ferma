@@ -22,6 +22,8 @@ import { ResultModal } from '../overlays/ResultModal';
 import { TradeSheet } from '../overlays/TradeSheet';
 import { WinModal } from '../overlays/WinModal';
 import { Confetti, Toast } from '../overlays/Toast';
+import { sound } from '../../game/sound';
+import { haptic } from '../../game/haptics';
 import styles from './GameScreen.module.css';
 
 /**
@@ -156,6 +158,28 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
   );
 
   const { state } = game;
+
+  // Фінал партії: фанфари й важка вібрація рівно один раз на перемогу.
+  // Хук стоїть ДО раннього виходу — інакше він викликався б не на кожному
+  // рендері (порушення правил хуків).
+  /*
+   * Набіг для телефону: та сама подія, але маршрут біжить по сітці дворів.
+   * Хук мусить викликатись ЗАВЖДИ (до раннього виходу), тому стоїть тут,
+   * а не поруч із розміткою, де він використовується.
+   */
+  const mobileRaid = shouldShowRaid(game.events);
+  const { vars: raidTargets, ready: raidReady } = useRaidTargets(
+    mobileRaid?.raider ?? null,
+    game.deltaKey,
+  );
+
+  const finishedNow = !!state?.over && !game.result;
+  useEffect(() => {
+    if (!finishedNow) return;
+    sound.play('win');
+    haptic('heavy');
+  }, [finishedNow]);
+
   if (!state) return null;
 
   const player = state.players[state.current] ?? state.players[0]!;
@@ -171,12 +195,8 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
    * позаду модалки, або те саме число, показане вдруге.
    */
 
-  // Набіг для телефону: та сама подія, але маршрут біжить по сітці дворів.
-  const mobileRaid = shouldShowRaid(game.events);
-  const { vars: raidTargets, ready: raidReady } = useRaidTargets(
-    mobileRaid?.raider ?? null,
-    game.deltaKey,
-  );
+
+
 
   return (
     <section className={cn(styles.shell, wide && styles.shellField, state.over && styles.finished)}>
@@ -244,19 +264,26 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
           {/* Нижня вільна смуга під загонами: вивіска, гравці, дії. */}
           <footer className={styles.footer}>
             <div className={styles.titleSign}>🌾 {GAME_TITLE}</div>
-            <PlayerRail variant="row" players={state.players} current={state.current} />
-            <div className={styles.tray}>
-              <ActionBar
-                state={state}
-                busy={game.rolling || !!game.result}
-                canTrade={game.canTrade}
-                tradesDone={game.tradesDone}
-                canUndo={game.canUndo}
-                onTrade={() => setTradeOpen(true)}
-                onRoll={game.roll}
-                onEndTurn={game.endTurn}
-                onUndo={game.undo}
-              />
+            {/*
+             * Рейка гравців і дії — в ОДНОМУ «доку»: на траві вони читались
+             * як окремі випадкові пілюлі, а разом утворюють зрозумілу панель
+             * керування (хто ходить → що робити).
+             */}
+            <div className={styles.dock}>
+              <PlayerRail variant="row" players={state.players} current={state.current} />
+              <div className={styles.tray}>
+                <ActionBar
+                  state={state}
+                  busy={game.rolling || !!game.result}
+                  canTrade={game.canTrade}
+                  tradesDone={game.tradesDone}
+                  canUndo={game.canUndo}
+                  onTrade={() => setTradeOpen(true)}
+                  onRoll={game.roll}
+                  onEndTurn={game.endTurn}
+                  onUndo={game.undo}
+                />
+              </div>
             </div>
           </footer>
 
@@ -378,7 +405,13 @@ export function GameScreen({ game, onOpenRules, onOpenSettings }: GameScreenProp
       {winOpen && winner && (
         <>
           <Confetti />
-          <WinModal winner={winner.name} onNewGame={game.reset} onClose={game.toStart} />
+          <WinModal
+            players={state.players}
+            winnerIndex={state.winnerIndex ?? 0}
+            rounds={state.round}
+            onNewGame={game.rematch}
+            onClose={game.toStart}
+          />
         </>
       )}
 

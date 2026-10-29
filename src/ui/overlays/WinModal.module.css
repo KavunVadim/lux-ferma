@@ -1,0 +1,362 @@
+/* Фінальний екран партії: пʼєдестал, нагороди й «поділитися». */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 92dvh;
+  overflow: hidden auto;
+  padding: 0 18px 18px;
+  border: 3px solid var(--wood);
+  border-radius: 28px;
+  background:
+    radial-gradient(95% 42% at 50% -6%, color-mix(in srgb, var(--gold) 20%, transparent), transparent 72%),
+    var(--card);
+  box-shadow:
+    0 10px 0 color-mix(in srgb, var(--wood-dark) 45%, var(--shadow)),
+    0 24px 60px rgba(0, 0, 0, 0.35);
+  text-align: center;
+  animation: win-in 0.55s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+/* Промені за кубком: повільно обертаються — урочистість без миготіння. */
+.rays {
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  width: 420px;
+  height: 420px;
+  margin-left: -210px;
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--gold) 24%, transparent) 0deg 9deg,
+    transparent 9deg 24deg
+  );
+  mask-image: radial-gradient(circle, #000 0%, transparent 68%);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: rays-turn 26s linear infinite;
+}
+
+.crown {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding-top: 14px;
+}
+
+.trophy {
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%, #fff3cf, var(--gold) 62%, var(--gold-dark));
+  border: 3px solid var(--wood);
+  box-shadow:
+    0 6px 0 color-mix(in srgb, var(--wood-dark) 60%, transparent),
+    0 8px 18px rgba(0, 0, 0, 0.18);
+  font-size: 3.2rem;
+  line-height: 1;
+  animation: trophy-hop 1.8s ease-in-out infinite;
+}
+
+.eyebrow {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--barn);
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 7vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.sub {
+  margin: 0 auto;
+  max-width: 34ch;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/*────────────────────────────── Пʼєдестал ──────────────────────────────*/
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 26px auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  text-align: left;
+}
+
+.rowWin {
+  border-color: color-mix(in srgb, var(--leaf) 55%, transparent);
+  background: color-mix(in srgb, var(--leaf) 16%, transparent);
+}
+
+.rank {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.rank[data-rank='1'] {
+  background: linear-gradient(180deg, #f2c86b, #d69e42);
+  color: #40280c;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 3px solid var(--player-color, var(--wood));
+  background: color-mix(in srgb, var(--player-color, var(--wood)) 20%, #fff);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.person {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slots {
+  display: flex;
+  gap: 1px;
+}
+
+.slot {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.slotOff {
+  opacity: 0.18;
+  filter: grayscale(1);
+}
+
+.score {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--leaf-dark);
+}
+
+.score i {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-style: normal;
+}
+
+/*───────────────────────────── Нагороди вечора ───────────────────────────*/
+
+.awards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.award {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px 5px 8px;
+  border: 2px solid color-mix(in srgb, var(--wood) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+}
+
+.awardEmoji {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.awardName {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.awardText i {
+  color: var(--ink-soft);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.awardText b {
+  font-weight: 900;
+}
+
+.awardValue {
+  flex: none;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+/*─────────────────────────────── Дії ───────────────────────────────────*/
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.secondary {
+  display: flex;
+  gap: 8px;
+}
+
+.secondary > * {
+  flex: 1 1 0;
+}
+
+.hint {
+  min-height: 1.1em;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+@keyframes win-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes trophy-hop {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(2deg);
+  }
+}
+
+@keyframes rays-turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* На вузькому екрані двох нагород достатньо: третя лише тисне на імена. */
+@media (max-width: 430px) {
+  .award:nth-child(3) {
+    display: none;
+  }
+}
+
+@media (max-height: 820px) {
+  .card {
+    gap: 7px;
+    padding: 0 14px 14px;
+  }
+
+  .row {
+    padding: 6px 8px;
+  }
+
+  .hint {
+    display: none;
+  }
+}
+
+@media (max-height: 700px) {
+  .awards {
+    display: none;
+  }
+
+  .trophy {
+    width: 74px;
+    height: 74px;
+    font-size: 2.5rem;
+  }
+
+  .rays {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rays,
+  .trophy {
+    animation: none;
+  }
+}
